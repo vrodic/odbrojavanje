@@ -1,0 +1,73 @@
+object GlavniForma: TGlavniForma
+  Left = 162
+  Height = 305
+  Top = 34
+  Width = 563
+  Caption = 'Odbrojavanje'
+  ClientHeight = 305
+  ClientWidth = 563
+  Color = clSkyBlue  // Light sky blue background for a calm and modern look
+  Font.Name = 'Arial'
+  Font.Size = 12
+  Font.Color = clWhite  // White text for labels on darker backgrounds
+  OldCreateOrder = False
+
+  // DateTimePicker for the user to set the future date/time
+  object VrijemePocetkaDateTimePicker: TDateTimePicker
+    Left = 200
+    Height = 28
+    Top = 88
+    Width = 160
+    CenturyFrom = 1941
+    Font.Name = 'Arial'
+    Font.Size = 12
+    Font.Color = clBlack  // Black text for clear readability
+    ParentFont = False
+    TabOrder = 0
+    Kind = dtkDateTime
+    TimeFormat = tf24
+    DateMode = dmComboBox
+    Date = 45591
+    Time = 0.333333333335759
+    Color = clWhite  // White background for input areas
+    BorderStyle = bsSingle  // Cleaner border style
+  end
+
+  // Label to display the countdown result in ISO format
+  object OdbrojavanjeLabel: TLabel
+    Left = 150
+    Height = 28
+    Top = 160
+    Width = 300
+    Alignment = taCenter  // Center text within the label
+    Caption = '00:00:00'
+    Font.CharSet = ANSI_CHARSET
+    Font.Height = -24
+    Font.Name = 'Arial'
+    Font.Color = clWhite  // White text on darker background
+    ParentFont = False
+    Transparent = False
+  end
+
+  // Label to display the current time
+  object TrenutnoVrijemeLabel: TLabel
+    Left = 150
+    Height = 22
+    Top = 48
+    Width = 300
+    Alignment = taCenter  // Center text within the label
+    Caption = '10:00:00'
+    Font.Name = 'Arial'
+    Font.Size = 12
+    Font.Color = clWhite  // White text for consistency
+    ParentFont = False
+    Transparent = False
+  end
+
+  // Timer to update the countdown regularly
+  object OdbrojavanjeTimer: TTimer
+    OnTimer = OdbrojavanjeTimerTimer
+    Interval = 1000  // Update every second for a real-time countdown
+    Enabled = True  // Start the timer automatically
+  end
+end

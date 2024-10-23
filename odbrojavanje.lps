@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="odbrojavanje.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="22"/>
+      </Unit>
+      <Unit>
+        <Filename Value="glavni.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="GlavniForma"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <TopLine Value="60"/>
+        <CursorPos X="56" Y="80"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="glavni.lfm"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="6" Y="4"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="LFM"/>
+      </Unit>
+    </Units>
+    <JumpHistory HistoryIndex="26">
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="9"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="10"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="13" Column="47"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="44" Column="3" TopLine="25"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="45" Column="3" TopLine="26"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="46" Column="3" TopLine="27"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="45" Column="3" TopLine="26"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="46" Column="3" TopLine="27"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="45" Column="3" TopLine="26"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="46" Column="3" TopLine="27"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="43" Column="31" TopLine="32"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="44" Column="31" TopLine="33"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="41" Column="4" TopLine="29"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="45" Column="3" TopLine="33"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="44" Column="85" TopLine="32"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="46" Column="3" TopLine="34"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="40" Column="30" TopLine="31"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="48" TopLine="13"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="21" Column="15" TopLine="9"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="20" Column="31" TopLine="9"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="19" Column="31" TopLine="9"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="23" Column="23" TopLine="9"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="70" Column="5" TopLine="48"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.lfm"/>
+        <Caret Line="8" Column="39"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.lfm"/>
+        <Caret Line="45" Column="33" TopLine="39"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.lfm"/>
+        <Caret Line="20" Column="43" TopLine="8"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.lfm"/>
+        <Caret Line="53" Column="51" TopLine="43"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>
