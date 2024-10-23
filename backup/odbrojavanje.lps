@@ -11,7 +11,7 @@
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="23"/>
+        <UsageCount Value="30"/>
       </Unit>
       <Unit>
         <Filename Value="glavni.pas"/>
@@ -20,53 +20,32 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="84"/>
-        <CursorPos Y="99"/>
-        <UsageCount Value="23"/>
+        <TopLine Value="49"/>
+        <CursorPos X="7" Y="60"/>
+        <UsageCount Value="30"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="glavni.lfm"/>
-        <EditorIndex Value="1"/>
-        <UsageCount Value="11"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="70"/>
+        <CursorPos X="17" Y="96"/>
+        <UsageCount Value="15"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="LFM"/>
       </Unit>
+      <Unit>
+        <Filename Value="../../fpcupdeluxe/lazarus/lcl/stdctrls.pp"/>
+        <UnitName Value="StdCtrls"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="603"/>
+        <CursorPos X="15" Y="613"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
     </Units>
     <JumpHistory HistoryIndex="29">
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="45" Column="3" TopLine="33"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="44" Column="85" TopLine="32"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="46" Column="3" TopLine="34"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="40" Column="30" TopLine="31"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="48" TopLine="13"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="21" Column="15" TopLine="9"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="20" Column="31" TopLine="9"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="19" Column="31" TopLine="9"/>
-      </Position>
       <Position>
         <Filename Value="glavni.pas"/>
         <Caret Line="23" Column="23" TopLine="9"/>
@@ -154,6 +133,38 @@
       <Position>
         <Filename Value="glavni.pas"/>
         <Caret Line="61" Column="67" TopLine="38"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="99" TopLine="47"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="34" Column="30" TopLine="31"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.lfm"/>
+        <Caret Line="7" Column="34"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="58" Column="45" TopLine="47"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="60" Column="34" TopLine="42"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="61" Column="35" TopLine="49"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.pas"/>
+        <Caret Line="60" Column="12" TopLine="49"/>
+      </Position>
+      <Position>
+        <Filename Value="../../fpcupdeluxe/lazarus/lcl/stdctrls.pp"/>
+        <Caret Line="613" Column="15" TopLine="603"/>
       </Position>
     </JumpHistory>
     <RunParams>

@@ -15,6 +15,8 @@ type
   Tx = class(TForm)
     DatePicker: TDateEdit;
     GroupBox1: TGroupBox;
+    GroupBox2: TGroupBox;
+    Log: TListBox;
     TimePicker: TTimeEdit;
     TrenutnoVrijemeLabel: TLabel;
     OdbrojavanjeLabel: TLabel;
@@ -29,6 +31,7 @@ type
 
 var
   x: Tx;
+  LapMiliseconds: Integer;
 
 implementation
 
@@ -43,11 +46,21 @@ var
   TrenutniDateTime, CiljaniDateTime, RemainingTime: TDateTime;
   Years, Months, Days, Hours, Minutes, Seconds, MilliSeconds: Integer;
   CountdownStr: string;
+  ElapsedTimeString: string;
 begin
-  TrenutniDateTime := Now; // Get current date and time
+  TrenutniDateTime := Now;
+  if LapMiliseconds < 0 then LapMiliseconds := 0;
 
-  // Display current time with milliseconds
-  TrenutnoVrijemeLabel.Caption := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', TrenutniDateTime);
+  ElapsedTimeString := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', TrenutniDateTime);
+  TrenutnoVrijemeLabel.Caption := ElapsedTimeString;
+
+  if LapMiliseconds = 5000 then
+  begin
+    LapMiliseconds := 0;
+    //Log.
+
+  end;
+
 
   // Get the selected future time
    // Ensure DatePicker and TimePicker have valid values
