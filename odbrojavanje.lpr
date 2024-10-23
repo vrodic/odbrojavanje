@@ -19,7 +19,7 @@ begin
   RequireDerivedFormResource:=True;
   Application.Scaled:=True;
   Application.Initialize;
-  Application.CreateForm(TGlavniForma, GlavniForma);
+  Application.CreateForm(Tx, x);
   Application.Run;
 end.
 

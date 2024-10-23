@@ -6,17 +6,20 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  DateTimePicker, DateUtils;
+  EditBtn, DateTimePicker, DateUtils;
 
 type
 
-  { TGlavniForma }
+  { Tx }
 
-  TGlavniForma = class(TForm)
+  Tx = class(TForm)
+    DatePicker: TDateEdit;
+    GroupBox1: TGroupBox;
+    TimePicker: TTimeEdit;
     TrenutnoVrijemeLabel: TLabel;
     OdbrojavanjeLabel: TLabel;
-    VrijemePocetkaDateTimePicker: TDateTimePicker;
     OdbrojavanjeTimer: TTimer;
+    procedure GroupBox1Click(Sender: TObject);
     procedure OdbrojavanjeTimerTimer(Sender: TObject);
   private
 
@@ -25,26 +28,37 @@ type
   end;
 
 var
-  GlavniForma: TGlavniForma;
+  x: Tx;
 
 implementation
 
 {$R *.lfm}
 
-{ TGlavniForma }
+{ Tx }
 
 
 
-procedure TGlavniForma.OdbrojavanjeTimerTimer(Sender: TObject);
+procedure Tx.OdbrojavanjeTimerTimer(Sender: TObject);
 var
   TrenutniDateTime, CiljaniDateTime, RemainingTime: TDateTime;
-  Years, Months, Days, Hours, Minutes, Seconds: Integer;
+  Years, Months, Days, Hours, Minutes, Seconds, MilliSeconds: Integer;
   CountdownStr: string;
 begin
   TrenutniDateTime := Now; // Get current date and time
-  TrenutnoVrijemeLabel.Caption := FormatDateTime('yyyy-mm-dd hh:nn:ss', TrenutniDateTime);
 
-  CiljaniDateTime := VrijemePocetkaDateTimePicker.DateTime; // Get the selected future time
+  // Display current time with milliseconds
+  TrenutnoVrijemeLabel.Caption := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', TrenutniDateTime);
+
+  // Get the selected future time
+   // Ensure DatePicker and TimePicker have valid values
+  if (DatePicker.Date = 0) or (TimePicker.Time = 0) then
+  begin
+    OdbrojavanjeLabel.Caption := 'Invalid date or time';
+    Exit;
+  end;
+
+  // Combine DatePicker and TimePicker into a single CiljaniDateTime value
+  CiljaniDateTime := Int(DatePicker.Date) + Frac(TimePicker.Time);
 
   // Check if the target time is in the future
   if TrenutniDateTime < CiljaniDateTime then
@@ -58,7 +72,7 @@ begin
     Hours := HourOf(RemainingTime);
     Minutes := MinuteOf(RemainingTime);
     Seconds := SecondOf(RemainingTime);
-
+    MilliSeconds := MilliSecondOf(RemainingTime);  // Get milliseconds of the remaining time
 
     CountdownStr := '';
 
@@ -68,25 +82,11 @@ begin
     if Months > 0 then
       CountdownStr := CountdownStr + Format('%dM', [Months]);
     if Days > 0 then
-      CountdownStr := CountdownStr + Format('%d days, ', [Days]);
+      CountdownStr := CountdownStr + Format('%d dana ', [Days]);
 
-    // Add time separator if there are hours, minutes, or seconds
-    if (Hours > 0) or (Minutes > 0) or (Seconds > 0) then
-    begin
-      CountdownStr := CountdownStr + ' ';
-      if Hours > 0 then
-        CountdownStr := CountdownStr + Format('%d h ', [Hours]);
-      if Minutes > 0 then
-        CountdownStr := CountdownStr + Format('%d min', [Minutes]);
-      if Seconds > 0 then
-        CountdownStr := CountdownStr + Format('%d sec', [Seconds]);
-    end;
-
-    // If no time is left at all, set the string to "PT0S"
-    if CountdownStr = 'P' then
-      CountdownStr := 'PT0S';
-
-    // Update label caption with the ISO 8601 formatted countdown
+ // Add time component (hours, minutes, seconds, and milliseconds) with leading zeros
+CountdownStr := CountdownStr + Format(' %.2d:%.2d:%.2d.%.3d', [Hours, Minutes, Seconds, MilliSeconds]);
+    // Update label caption with the formatted countdown
     OdbrojavanjeLabel.Caption := CountdownStr;
   end
   else
@@ -95,6 +95,12 @@ begin
     OdbrojavanjeLabel.Caption := 'Time is up!';
   end;
 end;
+
+procedure Tx.GroupBox1Click(Sender: TObject);
+begin
+
+end;
+
 
 
 end.

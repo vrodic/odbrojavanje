@@ -1,4 +1,4 @@
-object GlavniForma: TGlavniForma
+object x: Tx
   Left = 162
   Height = 305
   Top = 34
@@ -6,64 +6,70 @@ object GlavniForma: TGlavniForma
   Caption = 'Odbrojavanje'
   ClientHeight = 305
   ClientWidth = 563
-  Color = clSkyBlue  // Light sky blue background for a calm and modern look
-  Font.Name = 'Arial'
-  Font.Size = 12
-  Font.Color = clWhite  // White text for labels on darker backgrounds
-  OldCreateOrder = False
-
-  // DateTimePicker for the user to set the future date/time
-  object VrijemePocetkaDateTimePicker: TDateTimePicker
-    Left = 200
-    Height = 28
+  Color = clSkyBlue
+  object GroupBox1: TGroupBox
+    Left = 56
+    Height = 96
     Top = 88
-    Width = 160
-    CenturyFrom = 1941
-    Font.Name = 'Arial'
-    Font.Size = 12
-    Font.Color = clBlack  // Black text for clear readability
-    ParentFont = False
+    Width = 368
+    Caption = 'Odaberi vrijeme'
+    ClientHeight = 69
+    ClientWidth = 358
+    ParentBackground = False
     TabOrder = 0
-    Kind = dtkDateTime
-    TimeFormat = tf24
-    DateMode = dmComboBox
-    Date = 45591
-    Time = 0.333333333335759
-    Color = clWhite  // White background for input areas
-    BorderStyle = bsSingle  // Cleaner border style
+    OnClick = GroupBox1Click
+    object TimePicker: TTimeEdit
+      Left = 152
+      Height = 22
+      Top = 8
+      Width = 103
+      ButtonWidth = 23
+      NumGlyphs = 1
+      MaxLength = 0
+      TabOrder = 0
+    end
+    object DatePicker: TDateEdit
+      Left = 8
+      Height = 22
+      Top = 8
+      Width = 103
+      CalendarDisplaySettings = [dsShowHeadings, dsShowDayNames]
+      DateOrder = doNone
+      ButtonWidth = 23
+      NumGlyphs = 1
+      MaxLength = 0
+      TabOrder = 1
+    end
   end
-
-  // Label to display the countdown result in ISO format
   object OdbrojavanjeLabel: TLabel
-    Left = 150
-    Height = 28
-    Top = 160
-    Width = 300
-    Alignment = taCenter  // Center text within the label
+    Left = 176
+    Height = 27
+    Top = 224
+    Width = 115
     Caption = '00:00:00'
+    Color = clHotLight
     Font.CharSet = ANSI_CHARSET
     Font.Height = -24
-    Font.Name = 'Arial'
-    Font.Color = clWhite  // White text on darker background
+    Font.Name = 'Andale Mono'
+    ParentColor = False
     ParentFont = False
-    Transparent = False
   end
-
-  // Label to display the current time
   object TrenutnoVrijemeLabel: TLabel
-    Left = 150
-    Height = 22
+    Left = 56
+    Height = 21
     Top = 48
-    Width = 300
-    Alignment = taCenter  // Center text within the label
+    Width = 91
     Caption = '10:00:00'
-    Font.Name = 'Arial'
-    Font.Size = 12
-    Font.Color = clWhite  // White text for consistency
+    Font.CharSet = ANSI_CHARSET
+    Font.Height = -19
+    Font.Name = 'Andale Mono'
     ParentFont = False
-    Transparent = False
   end
-
-  // Timer to update the countdown regularly
   object OdbrojavanjeTimer: TTimer
-    OnTimer = OdbrojavanjeTimer
+    Interval = 33
+    OnTimer = OdbrojavanjeTimerTimer
+    OnStartTimer = OdbrojavanjeTimerTimer
+    Left = 280
+    Top = 8
+  end
+end

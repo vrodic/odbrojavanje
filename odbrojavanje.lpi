@@ -42,7 +42,7 @@
       <Unit>
         <Filename Value="glavni.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="GlavniForma"/>
+        <ComponentName Value="x"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
