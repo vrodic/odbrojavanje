@@ -13,16 +13,15 @@ object x: Tx
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 0
-    Height = 150
-    Top = 48
+    Height = 123
+    Top = 78
     Width = 606
-    Anchors = [akTop, akLeft, akRight]
+    Anchors = [akLeft, akRight]
     Caption = 'Odaberi vrijeme'
-    ClientHeight = 123
+    ClientHeight = 96
     ClientWidth = 596
     ParentBackground = False
     TabOrder = 0
-    OnClick = GroupBox1Click
     object TimePicker: TTimeEdit
       AnchorSideTop.Control = GroupBox1
       AnchorSideRight.Control = GroupBox1
@@ -38,19 +37,16 @@ object x: Tx
       TabOrder = 0
     end
     object TimerIntervalTrackbar: TTrackBar
-      AnchorSideLeft.Control = GroupBox1
-      AnchorSideRight.Control = GroupBox1
-      AnchorSideRight.Side = asrBottom
       Left = 0
       Height = 25
-      Top = 58
-      Width = 596
+      Top = 70
+      Width = 604
       Frequency = 1000
       Max = 50000000
       Min = 1
       OnChange = TimerIntervalTrackbarChange
       Position = 300000
-      Anchors = [akLeft, akRight]
+      Anchors = []
       TabOrder = 1
     end
     object TimerIntervalLabel: TLabel
@@ -126,10 +122,10 @@ object x: Tx
       AnchorSideRight.Control = GroupBox2
       AnchorSideRight.Side = asrBottom
       Left = 8
-      Height = 150
-      Top = 8
+      Height = 109
+      Top = 49
       Width = 588
-      Anchors = [akTop, akLeft, akRight]
+      Anchors = [akLeft, akRight]
       Columns = <      
         item
           Width = 220
@@ -156,6 +152,17 @@ object x: Tx
     NumGlyphs = 1
     MaxLength = 0
     TabOrder = 3
+  end
+  object ProgressBar1: TProgressBar
+    Left = 56
+    Height = 20
+    Top = 49
+    Width = 523
+    Anchors = []
+    Max = -1
+    Min = -1
+    Position = -1
+    TabOrder = 4
   end
   object OdbrojavanjeTimer: TTimer
     Interval = 1

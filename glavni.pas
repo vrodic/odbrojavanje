@@ -18,6 +18,7 @@ type
     DatePicker: TDateEdit;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
+    ProgressBar1: TProgressBar;
     TimerIntervalLabel: TLabel;
     LogListView: TListView;
     LogListBox: TListBox;
@@ -30,7 +31,6 @@ type
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure GroupBox1Click(Sender: TObject);
     procedure OdbrojavanjeTimerTimer(Sender: TObject);
     procedure TimerIntervalTrackbarChange(Sender: TObject);
   private
@@ -43,7 +43,9 @@ var
   x: Tx;
   LapMiliseconds: Integer = 0;
   IntervalMiliseconds: Integer = 1000;
-
+  StartTime: TDateTime;
+const
+  TimeMultiplier = 86400;
 implementation
 
 {$R *.lfm}
@@ -78,15 +80,24 @@ begin
     LapMiliseconds := 0;
   end;
   LapMiliseconds := LapMiliseconds + 1;
-  StatusBar1.SimpleText:= LapMiliseconds.ToString;
+
 
 
   // Combine DatePicker and TimePicker into a single CiljaniDateTime value
   CiljaniDateTime := Int(DatePicker.Date) + Frac(TimePicker.Time);
 
+
+
   // Check if the target time is in the future
   if CurrentDateTime < CiljaniDateTime then
   begin
+    if ProgressBar1.Max <> Round((CiljaniDateTime - StartTime) * 86400) then
+    begin
+        ProgressBar1.Max := Round((CiljaniDateTime - StartTime) * 86400);
+    end;
+    ProgressBar1.Position := Round((now - StartTime) * TimeMultiplier);
+    StatusBar1.SimpleText:= ProgressBar1.Max.ToString;
+
     // Calculate the difference in time
     Years := YearsBetween(CurrentDateTime, CiljaniDateTime);
     Months := MonthsBetween(IncYear(CurrentDateTime, Years), CiljaniDateTime);
@@ -126,17 +137,12 @@ begin
   TimerIntervalLabel.Caption := IntToStr(IntervalMiliseconds div 1000);
 end;
 
-procedure Tx.GroupBox1Click(Sender: TObject);
-begin
-
-end;
-
 procedure Tx.FormCreate(Sender: TObject);
 begin
   DatePicker.Date := IncDay(Now, 2);
   TimePicker.Time := IncHour(DatePicker.Date, 9);
   TimerIntervalTrackbarChange(Sender);
-
+  StartTime := Now;
 end;
 
 procedure Tx.Button2Click(Sender: TObject);
