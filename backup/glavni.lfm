@@ -7,51 +7,87 @@ object x: Tx
   ClientHeight = 409
   ClientWidth = 606
   Color = clSkyBlue
+  OnCreate = FormCreate
   object GroupBox1: TGroupBox
     AnchorSideLeft.Control = Owner
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
     Left = 0
-    Height = 96
+    Height = 150
     Top = 48
     Width = 606
     Anchors = [akTop, akLeft, akRight]
     Caption = 'Odaberi vrijeme'
-    ClientHeight = 69
+    ClientHeight = 123
     ClientWidth = 596
     ParentBackground = False
     TabOrder = 0
     OnClick = GroupBox1Click
     object TimePicker: TTimeEdit
-      Left = 350
+      AnchorSideTop.Control = GroupBox1
+      AnchorSideRight.Control = GroupBox1
+      AnchorSideRight.Side = asrBottom
+      Left = 493
       Height = 22
-      Top = 17
+      Top = 0
       Width = 103
       ButtonWidth = 23
-      Anchors = []
+      Anchors = [akTop, akRight]
       NumGlyphs = 1
       MaxLength = 0
       TabOrder = 0
     end
-    object DatePicker: TDateEdit
-      Left = 8
-      Height = 22
-      Top = 8
-      Width = 103
-      CalendarDisplaySettings = [dsShowHeadings, dsShowDayNames]
-      DateOrder = doNone
-      ButtonWidth = 23
-      NumGlyphs = 1
-      MaxLength = 0
+    object TimerIntervalTrackbar: TTrackBar
+      AnchorSideLeft.Control = GroupBox1
+      AnchorSideRight.Control = GroupBox1
+      AnchorSideRight.Side = asrBottom
+      Left = 0
+      Height = 25
+      Top = 58
+      Width = 596
+      Frequency = 1000
+      Max = 50000000
+      Min = 1
+      OnChange = TimerIntervalTrackbarChange
+      Position = 300000
+      Anchors = [akLeft, akRight]
       TabOrder = 1
+    end
+    object TimerIntervalLabel: TLabel
+      Left = 280
+      Height = 16
+      Top = 40
+      Width = 112
+      Caption = 'TimerIntervalLabel'
+    end
+    object Button1: TButton
+      Left = 504
+      Height = 25
+      Top = 32
+      Width = 75
+      Caption = '>'
+      TabOrder = 2
+      OnClick = Button1Click
+    end
+    object Button2: TButton
+      Left = 0
+      Height = 25
+      Top = 32
+      Width = 75
+      Caption = '<'
+      TabOrder = 3
+      OnClick = Button2Click
     end
   end
   object OdbrojavanjeLabel: TLabel
-    Left = -8
+    AnchorSideLeft.Control = StatusBar1
+    AnchorSideRight.Control = GroupBox2
+    AnchorSideRight.Side = asrBottom
+    Left = 0
     Height = 27
-    Top = 379
+    Top = 363
     Width = 606
-    Anchors = []
+    Anchors = [akLeft, akRight]
     Caption = '00:00:00'
     Color = clHotLight
     Font.CharSet = ANSI_CHARSET
@@ -77,31 +113,52 @@ object x: Tx
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = OdbrojavanjeLabel
     Left = 0
-    Height = 227
+    Height = 211
     Top = 152
     Width = 606
     Anchors = [akTop, akLeft, akRight, akBottom]
     Caption = 'Log'
-    ClientHeight = 200
+    ClientHeight = 184
     ClientWidth = 596
     ParentBackground = False
     TabOrder = 1
-    object Log: TListBox
+    object LogListView: TListView
       AnchorSideRight.Control = GroupBox2
       AnchorSideRight.Side = asrBottom
-      AnchorSideBottom.Control = GroupBox2
-      AnchorSideBottom.Side = asrBottom
-      Left = 0
-      Height = 226
-      Top = 0
-      Width = 605
-      Anchors = [akTop, akLeft, akRight, akBottom]
-      ItemHeight = 0
+      Left = 8
+      Height = 150
+      Top = 8
+      Width = 588
+      Anchors = [akTop, akLeft, akRight]
+      Columns = <      
+        item
+          Width = 220
+        end>
       TabOrder = 0
     end
   end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 18
+    Top = 391
+    Width = 606
+    Panels = <>
+    SimpleText = 'Plese select start time and date'
+  end
+  object DatePicker: TDateEdit
+    Left = 8
+    Height = 22
+    Top = 80
+    Width = 103
+    CalendarDisplaySettings = [dsShowHeadings, dsShowDayNames]
+    DateOrder = doNone
+    ButtonWidth = 23
+    NumGlyphs = 1
+    MaxLength = 0
+    TabOrder = 3
+  end
   object OdbrojavanjeTimer: TTimer
-    Interval = 33
+    Interval = 1
     OnTimer = OdbrojavanjeTimerTimer
     OnStartTimer = OdbrojavanjeTimerTimer
     Left = 520

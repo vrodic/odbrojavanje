@@ -6,23 +6,33 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  EditBtn, DateTimePicker, DateUtils;
+  EditBtn, ComCtrls, DateTimePicker, DateUtils;
 
 type
 
   { Tx }
 
   Tx = class(TForm)
+    Button1: TButton;
+    Button2: TButton;
     DatePicker: TDateEdit;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
-    Log: TListBox;
+    TimerIntervalLabel: TLabel;
+    LogListView: TListView;
+    LogListBox: TListBox;
+    StatusBar1: TStatusBar;
     TimePicker: TTimeEdit;
+    TimerIntervalTrackbar: TTrackBar;
     TrenutnoVrijemeLabel: TLabel;
     OdbrojavanjeLabel: TLabel;
     OdbrojavanjeTimer: TTimer;
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
     procedure GroupBox1Click(Sender: TObject);
     procedure OdbrojavanjeTimerTimer(Sender: TObject);
+    procedure TimerIntervalTrackbarChange(Sender: TObject);
   private
 
   public
@@ -31,7 +41,8 @@ type
 
 var
   x: Tx;
-  LapMiliseconds: Integer;
+  LapMiliseconds: Integer = 0;
+  IntervalMiliseconds: Integer = 1000;
 
 implementation
 
@@ -43,45 +54,45 @@ implementation
 
 procedure Tx.OdbrojavanjeTimerTimer(Sender: TObject);
 var
-  TrenutniDateTime, CiljaniDateTime, RemainingTime: TDateTime;
+  CurrentDateTime, CiljaniDateTime, RemainingTime: TDateTime;
   Years, Months, Days, Hours, Minutes, Seconds, MilliSeconds: Integer;
   CountdownStr: string;
-  ElapsedTimeString: string;
+  LogItem: TListItem;
 begin
-  TrenutniDateTime := Now;
-  if LapMiliseconds < 0 then LapMiliseconds := 0;
-
-  ElapsedTimeString := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', TrenutniDateTime);
-  TrenutnoVrijemeLabel.Caption := ElapsedTimeString;
-
-  if LapMiliseconds = 5000 then
-  begin
-    LapMiliseconds := 0;
-    //Log.
-
-  end;
-
-
-  // Get the selected future time
-   // Ensure DatePicker and TimePicker have valid values
+  CurrentDateTime := Now;
   if (DatePicker.Date = 0) or (TimePicker.Time = 0) then
   begin
     OdbrojavanjeLabel.Caption := 'Invalid date or time';
     Exit;
   end;
 
+  TrenutnoVrijemeLabel.Caption := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', CurrentDateTime);
+
+
+  if LapMiliseconds = IntervalMiliseconds then
+  begin
+    LogItem := LogListView.Items.Insert(0);
+    LogItem.Caption := TrenutnoVrijemeLabel.Caption;
+
+    //L®ogListBox.Items.Add(FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', CurrentDateTime));
+    LapMiliseconds := 0;
+  end;
+  LapMiliseconds := LapMiliseconds + 1;
+  StatusBar1.SimpleText:= LapMiliseconds.ToString;
+
+
   // Combine DatePicker and TimePicker into a single CiljaniDateTime value
   CiljaniDateTime := Int(DatePicker.Date) + Frac(TimePicker.Time);
 
   // Check if the target time is in the future
-  if TrenutniDateTime < CiljaniDateTime then
+  if CurrentDateTime < CiljaniDateTime then
   begin
     // Calculate the difference in time
-    Years := YearsBetween(TrenutniDateTime, CiljaniDateTime);
-    Months := MonthsBetween(IncYear(TrenutniDateTime, Years), CiljaniDateTime);
-    Days := DaysBetween(IncMonth(IncYear(TrenutniDateTime, Years), Months), CiljaniDateTime);
+    Years := YearsBetween(CurrentDateTime, CiljaniDateTime);
+    Months := MonthsBetween(IncYear(CurrentDateTime, Years), CiljaniDateTime);
+    Days := DaysBetween(IncMonth(IncYear(CurrentDateTime, Years), Months), CiljaniDateTime);
 
-    RemainingTime := CiljaniDateTime - IncMonth(IncYear(TrenutniDateTime, Years), Months);
+    RemainingTime := CiljaniDateTime - IncMonth(IncYear(CurrentDateTime, Years), Months);
     Hours := HourOf(RemainingTime);
     Minutes := MinuteOf(RemainingTime);
     Seconds := SecondOf(RemainingTime);
@@ -109,9 +120,33 @@ CountdownStr := CountdownStr + Format(' %.2d:%.2d:%.2d.%.3d', [Hours, Minutes, S
   end;
 end;
 
+procedure Tx.TimerIntervalTrackbarChange(Sender: TObject);
+begin
+  IntervalMiliseconds:=TimerIntervalTrackbar.Position;
+  TimerIntervalLabel.Caption := IntToStr(IntervalMiliseconds div 1000);
+end;
+
 procedure Tx.GroupBox1Click(Sender: TObject);
 begin
 
+end;
+
+procedure Tx.FormCreate(Sender: TObject);
+begin
+  DatePicker.Date := IncDay(Now, 2);
+  TimePicker.Time := IncHour(DatePicker.Date, 9);
+  TimerIntervalTrackbarChange(Sender);
+
+end;
+
+procedure Tx.Button2Click(Sender: TObject);
+begin
+  TimerIntervalTrackbar.Position := TimerIntervalTrackbar.Position - 1000;
+end;
+
+procedure Tx.Button1Click(Sender: TObject);
+begin
+  TimerIntervalTrackbar.Position := TimerIntervalTrackbar.Position + 1000;
 end;
 
 
