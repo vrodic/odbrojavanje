@@ -1,52 +1,43 @@
 object x: Tx
   Left = 162
-  Height = 409
+  Height = 774
   Top = 34
-  Width = 606
+  Width = 884
   Caption = 'Odbrojavanje'
-  ClientHeight = 409
-  ClientWidth = 606
+  ClientHeight = 774
+  ClientWidth = 884
   Color = clSkyBlue
   OnCreate = FormCreate
   object GroupBox1: TGroupBox
-    AnchorSideLeft.Control = Owner
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrBottom
     Left = 0
     Height = 123
-    Top = 78
-    Width = 606
-    Anchors = [akLeft, akRight]
+    Top = 557
+    Width = 984
     Caption = 'Odaberi vrijeme'
     ClientHeight = 96
-    ClientWidth = 596
+    ClientWidth = 974
     ParentBackground = False
     TabOrder = 0
     object TimePicker: TTimeEdit
-      AnchorSideTop.Control = GroupBox1
-      AnchorSideRight.Control = GroupBox1
-      AnchorSideRight.Side = asrBottom
-      Left = 493
+      Left = 871
       Height = 22
       Top = 0
       Width = 103
       ButtonWidth = 23
-      Anchors = [akTop, akRight]
       NumGlyphs = 1
       MaxLength = 0
       TabOrder = 0
     end
     object TimerIntervalTrackbar: TTrackBar
-      Left = 0
+      Left = 192
       Height = 25
       Top = 70
       Width = 604
       Frequency = 1000
       Max = 50000000
       Min = 1
-      OnChange = TimerIntervalTrackbarChange
       Position = 300000
-      Anchors = []
+      OnChange = TimerIntervalTrackbarChange
       TabOrder = 1
     end
     object TimerIntervalLabel: TLabel
@@ -76,14 +67,12 @@ object x: Tx
     end
   end
   object OdbrojavanjeLabel: TLabel
-    AnchorSideLeft.Control = StatusBar1
-    AnchorSideRight.Control = GroupBox2
-    AnchorSideRight.Side = asrBottom
-    Left = 0
+    Left = 381
     Height = 27
-    Top = 363
-    Width = 606
-    Anchors = [akLeft, akRight]
+    Top = 17
+    Width = 115
+    Anchors = []
+    BorderSpacing.Top = 40
     Caption = '00:00:00'
     Color = clHotLight
     Font.CharSet = ANSI_CHARSET
@@ -93,10 +82,11 @@ object x: Tx
     ParentFont = False
   end
   object TrenutnoVrijemeLabel: TLabel
-    Left = 16
+    Left = 123
     Height = 21
-    Top = 16
+    Top = 45
     Width = 91
+    Anchors = []
     Caption = '10:00:00'
     Font.CharSet = ANSI_CHARSET
     Font.Height = -19
@@ -104,40 +94,44 @@ object x: Tx
     ParentFont = False
   end
   object GroupBox2: TGroupBox
-    AnchorSideLeft.Control = Owner
-    AnchorSideRight.Control = Owner
-    AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = OdbrojavanjeLabel
     Left = 0
-    Height = 211
+    Height = 1504
     Top = 152
-    Width = 606
-    Anchors = [akTop, akLeft, akRight, akBottom]
+    Width = 984
     Caption = 'Log'
-    ClientHeight = 184
-    ClientWidth = 596
+    ClientHeight = 1477
+    ClientWidth = 974
     ParentBackground = False
     TabOrder = 1
     object LogListView: TListView
-      AnchorSideRight.Control = GroupBox2
-      AnchorSideRight.Side = asrBottom
-      Left = 8
+      Left = 0
       Height = 109
-      Top = 49
-      Width = 588
-      Anchors = [akLeft, akRight]
+      Top = 121
+      Width = 974
       Columns = <      
         item
           Width = 220
         end>
       TabOrder = 0
     end
+    object SunEvents: TComboBox
+      Left = 0
+      Height = 20
+      Top = 144
+      Width = 264
+      ItemHeight = 19
+      TabOrder = 1
+      Text = 'SunEvents'
+      OnChange = SunEventsChange
+    end
   end
   object StatusBar1: TStatusBar
-    Left = 0
+    Left = 8
     Height = 18
-    Top = 391
-    Width = 606
+    Top = 128
+    Width = 731
+    Align = alNone
+    Anchors = []
     Panels = <>
     SimpleText = 'Plese select start time and date'
   end
@@ -154,15 +148,40 @@ object x: Tx
     TabOrder = 3
   end
   object ProgressBar1: TProgressBar
-    Left = 56
+    Left = 123
     Height = 20
-    Top = 49
+    Top = 253
     Width = 523
-    Anchors = []
     Max = -1
     Min = -1
     Position = -1
     TabOrder = 4
+  end
+  object ExtendedNotebook1: TExtendedNotebook
+    Left = 16
+    Height = 328
+    Top = 424
+    Width = 856
+    ActivePage = TabSheet1
+    TabIndex = 0
+    TabOrder = 5
+    object TabSheet1: TTabSheet
+      Caption = 'Sun Times'
+      ClientHeight = 292
+      ClientWidth = 850
+      object SunGraphPaintBox: TPaintBox
+        Left = 8
+        Height = 280
+        Top = 0
+        Width = 840
+        OnMouseDown = SunGraphPaintBoxMouseDown
+        OnMouseMove = SunGraphPaintBoxMouseMove
+        OnPaint = SunGraphPaintBoxPaint
+      end
+    end
+    object TabSheet2: TTabSheet
+      Caption = 'Stocks'
+    end
   end
   object OdbrojavanjeTimer: TTimer
     Interval = 1

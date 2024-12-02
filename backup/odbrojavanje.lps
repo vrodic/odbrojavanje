@@ -11,7 +11,7 @@
         <WindowIndex Value="-1"/>
         <TopLine Value="-1"/>
         <CursorPos X="-1" Y="-1"/>
-        <UsageCount Value="76"/>
+        <UsageCount Value="86"/>
       </Unit>
       <Unit>
         <Filename Value="glavni.pas"/>
@@ -20,151 +20,150 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="86"/>
-        <CursorPos X="45" Y="99"/>
-        <UsageCount Value="76"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="572"/>
+        <CursorPos X="5" Y="590"/>
+        <UsageCount Value="86"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="glavni.lfm"/>
+        <HasResources Value="True"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="35"/>
-        <CursorPos X="33" Y="40"/>
-        <UsageCount Value="38"/>
+        <CursorPos X="11"/>
+        <UsageCount Value="43"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="LFM"/>
       </Unit>
       <Unit>
         <Filename Value="../../fpcupdeluxe/lazarus/lcl/stdctrls.pp"/>
         <UnitName Value="StdCtrls"/>
-        <EditorIndex Value="1"/>
         <TopLine Value="602"/>
         <CursorPos X="18" Y="613"/>
-        <UsageCount Value="33"/>
+        <UsageCount Value="38"/>
         <Loaded Value="True"/>
       </Unit>
     </Units>
     <JumpHistory HistoryIndex="29">
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="64" Column="27" TopLine="54"/>
+        <Caret Line="363" TopLine="357"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="63" Column="27" TopLine="53"/>
+        <Caret Line="364" TopLine="358"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="64" Column="27" TopLine="54"/>
+        <Caret Line="365" TopLine="359"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="65" Column="27" TopLine="55"/>
+        <Caret Line="366" TopLine="360"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="67" Column="27" TopLine="57"/>
+        <Caret Line="365" TopLine="359"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="121" Column="69" TopLine="110"/>
+        <Caret Line="368" Column="43" TopLine="359"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="122" Column="69" TopLine="111"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="123" Column="3" TopLine="113"/>
+        <Caret Line="367" Column="3" TopLine="365"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="140" Column="3" TopLine="124"/>
+        <Caret Line="508" TopLine="463"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="138" Column="58" TopLine="126"/>
+        <Caret Line="479" Column="20" TopLine="457"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="126" Column="66" TopLine="114"/>
+        <Caret Line="37" Column="3"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="138" Column="39" TopLine="121"/>
+        <Caret Line="36"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="139" Column="39" TopLine="122"/>
+        <Caret Line="510" Column="5" TopLine="466"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="140" Column="39" TopLine="123"/>
+        <Caret Line="427" Column="22" TopLine="408"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="139" Column="39" TopLine="122"/>
+        <Caret Line="436" Column="14" TopLine="408"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="138" Column="39" TopLine="121"/>
+        <Caret Line="453" Column="16" TopLine="416"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="99" Column="64" TopLine="80"/>
+        <Caret Line="469" Column="18" TopLine="432"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="95" Column="56" TopLine="80"/>
+        <Caret Line="482" Column="34" TopLine="446"/>
+      </Position>
+      <Position>
+        <Filename Value="glavni.lfm"/>
+        <Caret Line="163" Column="49" TopLine="143"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="165" TopLine="143"/>
+        <Caret Line="88" Column="56" TopLine="73"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="137" Column="5" TopLine="130"/>
+        <Caret Line="115" TopLine="88"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="144" Column="33" TopLine="133"/>
+        <Caret Line="112" Column="3" TopLine="84"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="143" Column="42" TopLine="127"/>
+        <Caret Line="387" Column="30" TopLine="371"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="92" Column="51" TopLine="82"/>
+        <Caret Line="73" Column="55" TopLine="33"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="96" Column="41" TopLine="83"/>
+        <Caret Line="82" TopLine="52"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="144" Column="50" TopLine="125"/>
+        <Caret Line="543" TopLine="530"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="143" Column="39" TopLine="91"/>
+        <Caret Line="641" Column="40" TopLine="607"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="93" Column="78" TopLine="82"/>
+        <Caret Line="81" Column="31" TopLine="59"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="98" Column="83" TopLine="84"/>
+        <Caret Line="546" TopLine="501"/>
       </Position>
       <Position>
         <Filename Value="glavni.pas"/>
-        <Caret Line="46" Column="29" TopLine="35"/>
-      </Position>
-      <Position>
-        <Filename Value="glavni.pas"/>
-        <Caret Line="145" Column="18" TopLine="134"/>
+        <Caret Line="380" TopLine="358"/>
       </Position>
     </JumpHistory>
     <RunParams>
