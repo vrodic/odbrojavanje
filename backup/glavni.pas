@@ -45,6 +45,8 @@ type
     Button1: TButton;
     Button2: TButton;
     ExtendedNotebook1: TExtendedNotebook;
+    Image1: TImage;
+    LogListView: TListView;
     SunGraphPaintBox: TPaintBox;
     SunEvents: TComboBox;
     DatePicker: TDateEdit;
@@ -54,8 +56,8 @@ type
     TabControl1: TTabControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
+    TabSheet3: TTabSheet;
     TimerIntervalLabel: TLabel;
-    LogListView: TListView;
     LogListBox: TListBox;
     StatusBar1: TStatusBar;
     TimePicker: TTimeEdit;
@@ -63,10 +65,13 @@ type
     TrenutnoVrijemeLabel: TLabel;
     OdbrojavanjeLabel: TLabel;
     OdbrojavanjeTimer: TTimer;
+    procedure ExtendedNotebook1Change(Sender: TObject);
     function GetSunTime(Date: TDateTime; SunEvent: TSunEvent): TDateTime;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure Image1MouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure OdbrojavanjeTimerTimer(Sender: TObject);
     procedure SunEventsChange(Sender: TObject);
     procedure TabControl1Change(Sender: TObject);
@@ -79,15 +84,27 @@ type
     procedure SunGraphPaintBoxMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure DatePickerChange(Sender: TObject);
+    function CalculateDayLength(Date: TDateTime): TDateTime;
+    procedure DrawTimeZoneHighlight;
+    procedure DrawSelectionMarker(X, Y: Integer);
+    procedure LatLonToXY(Latitude, Longitude: Double; out X, Y: Integer);
+
+    function MercatorYToLatitude(NormalizedY: Double): Double;
 
 
   private
-          LineX: Integer;          // X-coordinate of the vertical line
+    LineX: Integer;          // X-coordinate of the vertical line
     IsDragging: Boolean;     // Indicates if the line is being dragged
     DragOffset: Integer;     // Offset between mouse position and line during drag
+        FLatitude: Double;
+    FLongitude: Double;
+    FOriginalImage: TBitmap; // To store the original image
+
+  public
     procedure UpdateDateFromLineX;
     procedure UpdateLineXFromDate;
-  public
+    destructor Destroy; override;
+
 
   end;
 
@@ -143,8 +160,12 @@ var
 
 begin
   // Zagreb coordinates
-  Latitude := 45.8150;    // degrees North
-  Longitude := 15.9819;   // degrees East
+  //Latitude := 45.8150;    // degrees North
+  //Longitude := 15.9819;   // degrees East
+    // Use selected coordinates
+
+  Latitude := FLatitude;    // degrees North
+  Longitude := FLongitude;  // degrees East
 
   DecodeDate(Date, Year, Month, Day);
 
@@ -284,6 +305,11 @@ begin
   Result := Trunc(Date) + SunTime;
 end;
 
+procedure Tx.ExtendedNotebook1Change(Sender: TObject);
+begin
+
+end;
+
 
 
 
@@ -396,6 +422,9 @@ var
   MonthStartDay: Integer;
   MonthName: string;
   MonthIndex: Integer;
+  DayLength: TDateTime;
+  DayLengthStr: string;
+  TextX, TextY: Integer;
 begin
   // Initialize the canvas
   with SunGraphPaintBox.Canvas do
@@ -538,6 +567,24 @@ begin
     TextOut(LineX - 20, 5, FormatDateTime('dd mmm', DatePicker.Date));
     Pen.Style := psSolid; // Reset pen style
   end;
+
+    DayLength := CalculateDayLength(DatePicker.Date);
+
+  // Format the day length as a string (hours, minutes, seconds)
+  DayLengthStr := FormatDateTime('h "hrs" n "mins" s "secs"', DayLength);
+
+  // Determine the position to draw the text
+  TextX := 50; // Adjust as needed
+  TextY := 30; // Near top
+
+  // Draw the day length on the canvas
+  with SunGraphPaintBox.Canvas do
+  begin
+    Font.Size := 10;
+    Font.Style := [fsBold];
+    Font.Color := clBlack;
+    TextOut(TextX, TextY, 'Day Length: ' + DayLengthStr);
+  end;
 end;
 
 
@@ -617,7 +664,143 @@ begin
   TimerIntervalTrackbarChange(Sender);
   StartTime := Now;
   UpdateLineXFromDate;
+
+    // Load the original image
+  FOriginalImage := TBitmap.Create;
+  FOriginalImage.SetSize(Image1.Width, Image1.Height);
+  FOriginalImage.Canvas.StretchDraw(Rect(0, 0, Image1.Width, Image1.Height), Image1.Picture.Graphic);
+
+  // Initialize default coordinates (Zagreb)
+  FLatitude := 45.8150;    // Zagreb's latitude
+  FLongitude := 15.9819;   // Zagreb's longitude
+  DrawSelectionMarker(Image1.Width div 2, Image1.Height div 2);
 end;
+
+procedure Tx.Image1MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  ImageWidth, ImageHeight: Integer;
+  NormalizedX, NormalizedY: Double;
+  x_max, projX, projY: Double;
+  phi_0, cos_phi_0: Double;
+  sin_phi_div_phi_0, phi_div_phi_0, phi: Double;
+  cos_phi_div_phi_0, lambda: Double;
+  ClickLongitude, ClickLatitude: Double;
+begin
+  ImageWidth := Image1.Width;
+  ImageHeight := Image1.Height;
+
+  // Ensure the click is within the image bounds
+  if (X < 0) or (X >= ImageWidth) or (Y < 0) or (Y >= ImageHeight) then
+    Exit;
+
+  // Normalize X and Y to [0,1]
+  NormalizedX := X / ImageWidth;
+  NormalizedY := Y / ImageHeight;
+
+  // Constants for Wagner V projection
+  phi_0 := ArcCos(2 / 3); // φ₀ ≈ 0.88022 radians
+  cos_phi_0 := 2 / 3;
+
+  // Compute x_max (maximum x value)
+  x_max := Pi * cos_phi_0; // x_max = π * cos(φ₀)
+
+  // Compute projX and projY coordinates in the projection space
+  projX := (NormalizedX - 0.5) * 2 * x_max; // projX ranges from -x_max to +x_max
+  projY := 1 - 2 * NormalizedY;             // projY ranges from +1 at top to -1 at bottom
+
+  // Compute sin(φ / φ₀)
+  sin_phi_div_phi_0 := projY;
+
+  // Ensure sin_phi_div_phi_0 is within [-1, 1]
+  if sin_phi_div_phi_0 > 1 then
+    sin_phi_div_phi_0 := 1
+  else if sin_phi_div_phi_0 < -1 then
+    sin_phi_div_phi_0 := -1;
+
+  // Compute φ / φ₀
+  phi_div_phi_0 := ArcSin(sin_phi_div_phi_0);
+
+  // Compute φ (latitude in radians)
+  phi := phi_0 * phi_div_phi_0;
+
+  // Compute cos(φ / φ₀)
+  cos_phi_div_phi_0 := Cos(phi_div_phi_0);
+
+  // Compute λ (longitude in radians)
+  lambda := (projX * cos_phi_div_phi_0) / cos_phi_0;
+
+  // Convert λ and φ from radians to degrees
+  ClickLongitude := RadToDeg(lambda);
+  ClickLatitude := RadToDeg(phi);
+
+  // Update FLatitude and FLongitude
+  FLatitude := ClickLatitude;
+  FLongitude := ClickLongitude;
+
+  // Provide visual feedback by drawing a marker
+  DrawSelectionMarker(X, Y);
+
+  // Update sun events based on new coordinates
+  SunEventsChange(Sender);
+
+  // Redraw the sun graph
+  SunGraphPaintBox.Invalidate;
+
+  // Update coordinate labels
+  //LatitudeLabel.Caption := Format('Latitude: %.4f°', [FLatitude]);
+  //LongitudeLabel.Caption := Format('Longitude: %.4f°', [FLongitude]);
+end;
+
+
+procedure Tx.LatLonToXY(Latitude, Longitude: Double; out X, Y: Integer);
+var
+  phi, lambda: Double;
+  phi_0, cos_phi_0: Double;
+  phi_div_phi_0, cos_phi_div_phi_0: Double;
+  projX, projY: Double;
+  x_max: Double;
+  NormalizedX, NormalizedY: Double;
+  ImageWidth, ImageHeight: Integer;
+begin
+  ImageWidth := Image1.Width;
+  ImageHeight := Image1.Height;
+
+  // Convert degrees to radians
+  phi := DegToRad(Latitude);
+  lambda := DegToRad(Longitude);
+
+  // Constants for Wagner V projection
+  phi_0 := ArcCos(2 / 3);
+  cos_phi_0 := 2 / 3;
+
+  // Compute phi / phi_0
+  phi_div_phi_0 := phi / phi_0;
+
+  // Compute cos(phi / phi_0)
+  cos_phi_div_phi_0 := Cos(phi_div_phi_0);
+
+  // Compute x_max (maximum x value)
+  x_max := Pi * cos_phi_0;
+
+  // Compute projected coordinates
+  projX := lambda * (cos_phi_div_phi_0 / cos_phi_0);
+  projY := Sin(phi_div_phi_0);
+
+  // Normalize projected coordinates to [0,1]
+  NormalizedX := (projX / (2 * x_max)) + 0.5;
+  NormalizedY := (projY + 1) / 2;  // Corrected line
+
+  // Convert normalized coordinates to pixel coordinates
+  X := Round(NormalizedX * ImageWidth);
+  Y := Round(NormalizedY * ImageHeight);
+end;
+
+
+
+
+
+
 
 procedure Tx.Button2Click(Sender: TObject);
 begin
@@ -649,10 +832,11 @@ end;
 
 procedure Tx.UpdateLineXFromDate;
 var
-  Year, TotalDays, DayIndex: Integer;
+  Year, Month, Day: Word;      // Declare variables for Year, Month, Day
+  TotalDays, DayIndex: Integer;
   StartDate: TDateTime;
 begin
-  DecodeDate(DatePicker.Date, Year, _, _);
+  DecodeDate(DatePicker.Date, Year, Month, Day);  // Use declared variables
   StartDate := EncodeDate(Year, 1, 1);
   TotalDays := DaysInYear(Year);
   DayIndex := Trunc(DatePicker.Date - StartDate);
@@ -660,7 +844,103 @@ begin
   LineX := 40 + Round(DayIndex * (SunGraphPaintBox.Width - 40) / TotalDays);
 end;
 
+function Tx.CalculateDayLength(Date: TDateTime): TDateTime;
+var
+  SunriseTime, SunsetTime: TDateTime;
+begin
+  // Get the sunrise and sunset times for the date
+  SunriseTime := GetSunTime(Date, seSunrise);
+  SunsetTime := GetSunTime(Date, seSunset);
+
+  // Calculate the difference
+  if SunsetTime >= SunriseTime then
+    Result := SunsetTime - SunriseTime
+  else
+    // Handle cases where sunset is on the next day
+    Result := (SunsetTime + 1) - SunriseTime;
+end;
+
+procedure Tx.DrawTimeZoneHighlight;
+var
+  ImageWidth, ImageHeight: Integer;
+  TimeZoneOffset: Integer;
+  TimeZoneStartLongitude, TimeZoneEndLongitude: Double;
+  XStart, XEnd: Integer;
+begin
+  ImageWidth := Image1.Width;
+  ImageHeight := Image1.Height;
+
+  // Copy the original image to Image1
+  Image1.Picture.Bitmap.Assign(FOriginalImage);
+
+  // Calculate timezone offset
+  TimeZoneOffset := Floor((FLongitude + 7.5) / 15);
+
+  // Calculate the start and end longitude of the timezone
+  TimeZoneStartLongitude := TimeZoneOffset * 15 - 7.5;
+  TimeZoneEndLongitude := TimeZoneStartLongitude + 15;
+
+  // Map longitudes to X coordinates
+  XStart := Round(((TimeZoneStartLongitude + 180.0) / 360.0) * ImageWidth);
+  XEnd := Round(((TimeZoneEndLongitude + 180.0) / 360.0) * ImageWidth);
+
+  // Draw the highlight rectangle
+  with Image1.Canvas do
+  begin
+    Brush.Style := bsDiagCross; // Diagonal cross hatch
+    Brush.Color := clRed;
+    Pen.Style := psClear;
+    FillRect(Rect(XStart, 0, XEnd, ImageHeight));
+  end;
+end;
+
+destructor Tx.Destroy;
+begin
+  FOriginalImage.Free;
+  inherited Destroy;
+end;
+
+procedure Tx.DrawSelectionMarker(X, Y: Integer);
+var
+  MarkerSize: Integer;
+  LeftTopX, LeftTopY: Integer;
+begin
+  // Copy the original image to Image1 to clear previous markers
+  Image1.Picture.Bitmap.Assign(FOriginalImage);
+
+  // Define the size of the marker (e.g., 10x10 pixels)
+  MarkerSize := 10;
+
+  // Calculate the top-left corner of the marker
+  LeftTopX := X - (MarkerSize div 2);
+  LeftTopY := Y - (MarkerSize div 2);
+
+  // Draw the marker (e.g., a red rectangle)
+  with Image1.Canvas do
+  begin
+    Pen.Color := clRed;
+    Pen.Width := 2;
+    Brush.Style := bsClear;
+    Rectangle(LeftTopX, LeftTopY, LeftTopX + MarkerSize, LeftTopY + MarkerSize);
+  end;
+end;
+
+
+function Tx.MercatorYToLatitude(NormalizedY: Double): Double;
+var
+  MercatorY: Double;
+begin
+  // Adjust NormalizedY to Mercator Y
+  // MercatorY ranges from pi at the bottom to -pi at the top
+  MercatorY := Pi * (1 - 2 * NormalizedY);
+
+  // Convert Mercator Y to latitude in radians
+  Result := RadToDeg(ArcTan(Sinh(MercatorY)));
+end;
+
+
 
 
 end.
+
 
