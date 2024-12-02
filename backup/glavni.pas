@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  EditBtn, ComCtrls, DateTimePicker, ExtendedNotebook, DateUtils, Math;
+  EditBtn, ComCtrls, DateTimePicker, ExtendedNotebook, DateUtils, Math, fpjson, jsonparser, Types;
 
 type
   TSunEvent = (
@@ -39,14 +39,22 @@ type
   clMaroon = TColor($800000);
   clNavy = TColor($000080);
 
+  type
+      TCoordinate = record
+    Latitude: Double;
+    Longitude: Double;
+  end;
+
+  TPolygon = array of TCoordinate;
+  TWorldMap = array of TPolygon;
   { Tx }
   type
   Tx = class(TForm)
     Button1: TButton;
     Button2: TButton;
     ExtendedNotebook1: TExtendedNotebook;
-    Image1: TImage;
     LogListView: TListView;
+    PaintBox1: TPaintBox;
     SunGraphPaintBox: TPaintBox;
     SunEvents: TComboBox;
     DatePicker: TDateEdit;
@@ -70,9 +78,17 @@ type
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Image1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+
     procedure OdbrojavanjeTimerTimer(Sender: TObject);
+    procedure PaintBox1MouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure PaintBox1MouseMove(Sender: TObject; Shift: TShiftState; X,
+      Y: Integer);
+    procedure PaintBox1MouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
+      WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+    procedure PaintBox1Paint(Sender: TObject);
     procedure SunEventsChange(Sender: TObject);
     procedure TabControl1Change(Sender: TObject);
     procedure TimerIntervalTrackbarChange(Sender: TObject);
@@ -85,11 +101,16 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure DatePickerChange(Sender: TObject);
     function CalculateDayLength(Date: TDateTime): TDateTime;
-    procedure DrawTimeZoneHighlight;
-    procedure DrawSelectionMarker(X, Y: Integer);
-    procedure LatLonToXY(Latitude, Longitude: Double; out X, Y: Integer);
+    procedure ProcessGeometry(GeometryObject: TJSONObject; MapIndex: Integer);
+    procedure ProcessPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
+    procedure ProcessMultiPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
 
-    function MercatorYToLatitude(NormalizedY: Double): Double;
+
+
+
+    procedure LoadWorldMapData;
+    function MercatorProjectionY(Latitude: Double): Double;
+    function MercatorYToLatitude(Y: Double): Double;
 
 
   private
@@ -98,12 +119,18 @@ type
     DragOffset: Integer;     // Offset between mouse position and line during drag
         FLatitude: Double;
     FLongitude: Double;
-    FOriginalImage: TBitmap; // To store the original image
+
+    WorldMap: TWorldMap;
+    FScale: Double;
+    FOffsetX: Double;
+    FOffsetY: Double;
+    FMouseDown: Boolean;
+    FMouseDownPos: TPoint;
+    FMouseDownOffset: TPoint;
 
   public
     procedure UpdateDateFromLineX;
     procedure UpdateLineXFromDate;
-    destructor Destroy; override;
 
 
   end;
@@ -390,6 +417,310 @@ CountdownStr := CountdownStr + Format(' %.2d:%.2d:%.2d.%.3d', [Hours, Minutes, S
   end;
 end;
 
+procedure Tx.LoadWorldMapData;
+var
+  JSONData: TJSONData;
+  JSONParser: TJSONParser;
+  FileStream: TFileStream;
+  FeaturesArray: TJSONArray;
+  FeatureObject, GeometryObject: TJSONObject;
+  CoordinatesData: TJSONData;
+  i: Integer;
+begin
+  // Load the GeoJSON file
+  FileStream := TFileStream.Create(ExtractFilePath(Application.ExeName) + './world.geo.json', fmOpenRead);
+  try
+    JSONParser := TJSONParser.Create(FileStream);
+    try
+      JSONData := JSONParser.Parse;
+      try
+        // Access the "features" array
+        FeaturesArray := JSONData.FindPath('features') as TJSONArray;
+        if FeaturesArray = nil then
+          Exit; // No features found
+
+        // Initialize the WorldMap array
+        SetLength(WorldMap, FeaturesArray.Count);
+
+        // Iterate over each feature
+        for i := 0 to FeaturesArray.Count - 1 do
+        begin
+          FeatureObject := FeaturesArray.Objects[i];
+          GeometryObject := FeatureObject.FindPath('geometry') as TJSONObject;
+
+          if GeometryObject = nil then
+            Continue;
+
+          // Process the geometry based on its type
+          ProcessGeometry(GeometryObject, i);
+        end;
+
+      finally
+        JSONData.Free;
+      end;
+    finally
+      JSONParser.Free;
+    end;
+  finally
+    FileStream.Free;
+  end;
+end;
+
+   procedure Tx.ProcessGeometry(GeometryObject: TJSONObject; MapIndex: Integer);
+var
+  GeometryType: String;
+  CoordinatesData: TJSONData;
+begin
+  GeometryType := GeometryObject.Get('type', '');
+  CoordinatesData := GeometryObject.FindPath('coordinates');
+
+  if GeometryType = 'Polygon' then
+    ProcessPolygon(CoordinatesData, MapIndex)
+  else if GeometryType = 'MultiPolygon' then
+    ProcessMultiPolygon(CoordinatesData, MapIndex);
+end;
+
+procedure Tx.ProcessPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
+var
+  CoordinatesArray: TJSONArray;
+  RingArray: TJSONArray;
+  i, j: Integer;
+  Polygon: TPolygon;
+  CoordPair: TJSONArray;
+begin
+  // CoordinatesData is an array of linear rings
+  CoordinatesArray := CoordinatesData as TJSONArray;
+  if CoordinatesArray.Count = 0 then
+    Exit;
+
+  // We'll process only the outer ring (first ring)
+  RingArray := CoordinatesArray.Items[0] as TJSONArray;
+
+  SetLength(Polygon, RingArray.Count);
+
+  for i := 0 to RingArray.Count - 1 do
+  begin
+    CoordPair := RingArray.Items[i] as TJSONArray;
+    Polygon[i].Longitude := CoordPair.Floats[0];
+    Polygon[i].Latitude := CoordPair.Floats[1];
+  end;
+
+  WorldMap[MapIndex] := Polygon;
+end;
+
+
+procedure Tx.ProcessMultiPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
+var
+  PolygonsArray: TJSONArray;
+  i: Integer;
+begin
+  // CoordinatesData is an array of polygons
+  PolygonsArray := CoordinatesData as TJSONArray;
+  for i := 0 to PolygonsArray.Count - 1 do
+  begin
+    // For simplicity, we process only the first polygon
+    ProcessPolygon(PolygonsArray.Items[i], MapIndex);
+    // If you want to process all polygons, you'll need to adjust WorldMap accordingly
+    Break; // Remove this line to process all polygons
+  end;
+end;
+
+
+
+procedure Tx.PaintBox1Paint(Sender: TObject);
+var
+  i, j: Integer;
+  MapWidth, MapHeight: Double;
+  OffsetX, OffsetY: Double;
+  Scale: Double;
+  ScreenX, ScreenY: Integer;
+  APolygon: TPolygon;
+  ScreenPoints: array of TPoint;
+begin
+  // Define the map dimensions in projected units
+  MapWidth := DegToRad(360); // Longitude ranges from -180 to +180 degrees
+  MapHeight := 2 * Pi;       // Mercator Y ranges from -π to +π
+
+  // Calculate the scale to fit the map into the paint box, adjusted by FScale
+  Scale := FScale * Min(PaintBox1.Width / MapWidth, PaintBox1.Height / MapHeight);
+
+  // Calculate the offsets to center the map, adjusted by FOffsetX and FOffsetY
+  OffsetX := (PaintBox1.Width / 2) + FOffsetX;
+  OffsetY := (PaintBox1.Height / 2) + FOffsetY;
+
+  // Set up the canvas
+  with PaintBox1.Canvas do
+  begin
+    Brush.Color := clWhite;
+    FillRect(ClipRect);
+    Pen.Color := clBlack;
+    Pen.Width := 1;
+
+    // Loop through each polygon in the world map
+    for i := 0 to High(WorldMap) do
+    begin
+      APolygon := WorldMap[i];
+      if Length(APolygon) = 0 then
+        Continue;
+
+      // Set the length of the ScreenPoints array
+      SetLength(ScreenPoints, Length(APolygon));
+
+      // Convert each coordinate to screen points
+      for j := 0 to High(APolygon) do
+      begin
+        ScreenX := Round(OffsetX + Scale * DegToRad(APolygon[j].Longitude));
+        ScreenY := Round(OffsetY - Scale * MercatorProjectionY(APolygon[j].Latitude));
+        ScreenPoints[j] := Point(ScreenX, ScreenY);
+      end;
+
+      // Draw the polygon
+      Polygon(ScreenPoints);
+    end;
+
+    // Draw the selection marker
+    if not IsNaN(FLatitude) and not IsNaN(FLongitude) then
+    begin
+      ScreenX := Round(OffsetX + Scale * DegToRad(FLongitude));
+      ScreenY := Round(OffsetY - Scale * MercatorProjectionY(FLatitude));
+
+      Pen.Color := clRed;
+      Pen.Width := 2;
+      Brush.Style := bsClear;
+      Ellipse(ScreenX - 5, ScreenY - 5, ScreenX + 5, ScreenY + 5);
+    end;
+  end;
+end;
+
+
+
+
+procedure Tx.PaintBox1MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  MapWidth, MapHeight: Double;
+  OffsetX, OffsetY: Double;
+  Scale: Double;
+  ProjX, ProjY: Double;
+  Longitude, Latitude: Double;
+begin
+  if Button = mbLeft then
+  begin
+    FMouseDown := True;
+    FMouseDownPos := Point(X, Y);
+    FMouseDownOffset := Point(Round(FOffsetX), Round(FOffsetY));
+  end
+  else if Button = mbRight then
+  begin
+    // Define the map dimensions in projected units
+    MapWidth := DegToRad(360);
+    MapHeight := 2 * Pi;
+
+    // Calculate the scale and offsets (same as in OnPaint)
+    Scale := FScale * Min(PaintBox1.Width / MapWidth, PaintBox1.Height / MapHeight);
+    OffsetX := (PaintBox1.Width / 2) + FOffsetX;
+    OffsetY := (PaintBox1.Height / 2) + FOffsetY;
+
+    // Convert screen coordinates to projected coordinates
+    ProjX := (X - OffsetX) / Scale;
+    ProjY := (OffsetY - Y) / Scale;
+
+    // Convert projected coordinates to latitude and longitude
+    Longitude := RadToDeg(ProjX);
+    Latitude := MercatorYToLatitude(ProjY);
+
+    // Update the selected coordinates
+    FLatitude := Latitude;
+    FLongitude := Longitude;
+
+    // Redraw the map to show the selection
+    PaintBox1.Invalidate;
+
+    // Update sun events or other functionalities
+    SunEventsChange(Sender);
+
+    // Redraw the sun graph
+    SunGraphPaintBox.Invalidate;
+  end;
+end;
+
+
+procedure Tx.PaintBox1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+begin
+  if FMouseDown then
+  begin
+    FOffsetX := FMouseDownOffset.X + (X - FMouseDownPos.X);
+    FOffsetY := FMouseDownOffset.Y + (Y - FMouseDownPos.Y);
+    PaintBox1.Invalidate;
+  end;
+end;
+
+procedure Tx.PaintBox1MouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  if Button = mbLeft then
+  begin
+    FMouseDown := False;
+  end;
+end;
+
+
+
+procedure Tx.PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer;
+  MousePos: TPoint; var Handled: Boolean);
+var
+  OldScale, ScaleFactor: Double;
+  MouseMapX, MouseMapY: Double;
+begin
+  // Determine the scale factor
+  if WheelDelta > 0 then
+    ScaleFactor := 1.1  // Zoom in
+  else
+    ScaleFactor := 0.9; // Zoom out
+
+  OldScale := FScale;
+  FScale := FScale * ScaleFactor;
+
+  // Prevent excessive zooming
+  if FScale < 0.1 then
+    FScale := 0.1
+  else if FScale > 10 then
+    FScale := 10;
+
+  // Adjust offsets to zoom around the mouse position
+  MouseMapX := (MousePos.X - (PaintBox1.Width / 2) - FOffsetX) / OldScale;
+  MouseMapY := (MousePos.Y - (PaintBox1.Height / 2) - FOffsetY) / OldScale;
+
+  FOffsetX := FOffsetX - (MouseMapX * (FScale - OldScale));
+  FOffsetY := FOffsetY - (MouseMapY * (FScale - OldScale));
+
+  // Redraw the map
+  PaintBox1.Invalidate;
+
+  Handled := True;
+end;
+
+
+function tx.MercatorProjectionY(Latitude: Double): Double;
+var
+  LatRad: Double;
+begin
+  // Limit latitude to avoid infinity at poles
+  if Latitude > 89.5 then
+    Latitude := 89.5
+  else if Latitude < -89.5 then
+    Latitude := -89.5;
+
+  LatRad := DegToRad(Latitude);
+  Result := Ln(Tan(Pi / 4 + LatRad / 2));
+end;
+
+function tx.MercatorYToLatitude(Y: Double): Double;
+begin
+  Result := RadToDeg(2 * ArcTan(Exp(Y)) - Pi / 2);
+end;
+
+
 procedure Tx.SunEventsChange(Sender: TObject);
 var
   SelectedEvent: TSunEvent;
@@ -664,138 +995,13 @@ begin
   TimerIntervalTrackbarChange(Sender);
   StartTime := Now;
   UpdateLineXFromDate;
-
-    // Load the original image
-  FOriginalImage := TBitmap.Create;
-  FOriginalImage.SetSize(Image1.Width, Image1.Height);
-  FOriginalImage.Canvas.StretchDraw(Rect(0, 0, Image1.Width, Image1.Height), Image1.Picture.Graphic);
-
-  // Initialize default coordinates (Zagreb)
-  FLatitude := 45.8150;    // Zagreb's latitude
-  FLongitude := 15.9819;   // Zagreb's longitude
-  DrawSelectionMarker(Image1.Width div 2, Image1.Height div 2);
+  FScale := 2.0;       // Initial scale
+  FOffsetX := 0.0;     // Initial horizontal offset
+  FOffsetY := 0.0;     // Initial vertical offset
+  FMouseDown := False; // Mouse is not pressed
+  // Load the world map data from the GeoJSON file
+  LoadWorldMapData;
 end;
-
-procedure Tx.Image1MouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-var
-  ImageWidth, ImageHeight: Integer;
-  NormalizedX, NormalizedY: Double;
-  x_max, projX, projY: Double;
-  phi_0, cos_phi_0: Double;
-  sin_phi_div_phi_0, phi_div_phi_0, phi: Double;
-  cos_phi_div_phi_0, lambda: Double;
-  ClickLongitude, ClickLatitude: Double;
-begin
-  ImageWidth := Image1.Width;
-  ImageHeight := Image1.Height;
-
-  // Ensure the click is within the image bounds
-  if (X < 0) or (X >= ImageWidth) or (Y < 0) or (Y >= ImageHeight) then
-    Exit;
-
-  // Normalize X and Y to [0,1]
-  NormalizedX := X / ImageWidth;
-  NormalizedY := Y / ImageHeight;
-
-  // Constants for Wagner V projection
-  phi_0 := ArcCos(2 / 3); // φ₀ ≈ 0.88022 radians
-  cos_phi_0 := 2 / 3;
-
-  // Compute x_max (maximum x value)
-  x_max := Pi * cos_phi_0; // x_max = π * cos(φ₀)
-
-  // Compute projX and projY coordinates in the projection space
-  projX := (NormalizedX - 0.5) * 2 * x_max; // projX ranges from -x_max to +x_max
-  projY := 1 - 2 * NormalizedY;             // projY ranges from +1 at top to -1 at bottom
-
-  // Compute sin(φ / φ₀)
-  sin_phi_div_phi_0 := projY;
-
-  // Ensure sin_phi_div_phi_0 is within [-1, 1]
-  if sin_phi_div_phi_0 > 1 then
-    sin_phi_div_phi_0 := 1
-  else if sin_phi_div_phi_0 < -1 then
-    sin_phi_div_phi_0 := -1;
-
-  // Compute φ / φ₀
-  phi_div_phi_0 := ArcSin(sin_phi_div_phi_0);
-
-  // Compute φ (latitude in radians)
-  phi := phi_0 * phi_div_phi_0;
-
-  // Compute cos(φ / φ₀)
-  cos_phi_div_phi_0 := Cos(phi_div_phi_0);
-
-  // Compute λ (longitude in radians)
-  lambda := (projX * cos_phi_div_phi_0) / cos_phi_0;
-
-  // Convert λ and φ from radians to degrees
-  ClickLongitude := RadToDeg(lambda);
-  ClickLatitude := RadToDeg(phi);
-
-  // Update FLatitude and FLongitude
-  FLatitude := ClickLatitude;
-  FLongitude := ClickLongitude;
-
-  // Provide visual feedback by drawing a marker
-  DrawSelectionMarker(X, Y);
-
-  // Update sun events based on new coordinates
-  SunEventsChange(Sender);
-
-  // Redraw the sun graph
-  SunGraphPaintBox.Invalidate;
-
-  // Update coordinate labels
-  //LatitudeLabel.Caption := Format('Latitude: %.4f°', [FLatitude]);
-  //LongitudeLabel.Caption := Format('Longitude: %.4f°', [FLongitude]);
-end;
-
-
-procedure Tx.LatLonToXY(Latitude, Longitude: Double; out X, Y: Integer);
-var
-  phi, lambda: Double;
-  phi_0, cos_phi_0: Double;
-  phi_div_phi_0, cos_phi_div_phi_0: Double;
-  projX, projY: Double;
-  x_max: Double;
-  NormalizedX, NormalizedY: Double;
-  ImageWidth, ImageHeight: Integer;
-begin
-  ImageWidth := Image1.Width;
-  ImageHeight := Image1.Height;
-
-  // Convert degrees to radians
-  phi := DegToRad(Latitude);
-  lambda := DegToRad(Longitude);
-
-  // Constants for Wagner V projection
-  phi_0 := ArcCos(2 / 3);
-  cos_phi_0 := 2 / 3;
-
-  // Compute phi / phi_0
-  phi_div_phi_0 := phi / phi_0;
-
-  // Compute cos(phi / phi_0)
-  cos_phi_div_phi_0 := Cos(phi_div_phi_0);
-
-  // Compute x_max (maximum x value)
-  x_max := Pi * cos_phi_0;
-
-  // Compute projected coordinates
-  projX := lambda * (cos_phi_div_phi_0 / cos_phi_0);
-  projY := Sin(phi_div_phi_0);
-
-  // Normalize projected coordinates to [0,1]
-  NormalizedX := (projX / (2 * x_max)) + 0.5;
-  NormalizedY := (projY + 1) / 2;  // Corrected line
-
-  // Convert normalized coordinates to pixel coordinates
-  X := Round(NormalizedX * ImageWidth);
-  Y := Round(NormalizedY * ImageHeight);
-end;
-
 
 
 
@@ -860,83 +1066,15 @@ begin
     Result := (SunsetTime + 1) - SunriseTime;
 end;
 
-procedure Tx.DrawTimeZoneHighlight;
-var
-  ImageWidth, ImageHeight: Integer;
-  TimeZoneOffset: Integer;
-  TimeZoneStartLongitude, TimeZoneEndLongitude: Double;
-  XStart, XEnd: Integer;
+
+
+
+
+function MercatorProjectionY(Latitude: Double): Double;
 begin
-  ImageWidth := Image1.Width;
-  ImageHeight := Image1.Height;
-
-  // Copy the original image to Image1
-  Image1.Picture.Bitmap.Assign(FOriginalImage);
-
-  // Calculate timezone offset
-  TimeZoneOffset := Floor((FLongitude + 7.5) / 15);
-
-  // Calculate the start and end longitude of the timezone
-  TimeZoneStartLongitude := TimeZoneOffset * 15 - 7.5;
-  TimeZoneEndLongitude := TimeZoneStartLongitude + 15;
-
-  // Map longitudes to X coordinates
-  XStart := Round(((TimeZoneStartLongitude + 180.0) / 360.0) * ImageWidth);
-  XEnd := Round(((TimeZoneEndLongitude + 180.0) / 360.0) * ImageWidth);
-
-  // Draw the highlight rectangle
-  with Image1.Canvas do
-  begin
-    Brush.Style := bsDiagCross; // Diagonal cross hatch
-    Brush.Color := clRed;
-    Pen.Style := psClear;
-    FillRect(Rect(XStart, 0, XEnd, ImageHeight));
-  end;
+  Result := Ln(Tan(Pi / 4 + DegToRad(Latitude) / 2));
 end;
 
-destructor Tx.Destroy;
-begin
-  FOriginalImage.Free;
-  inherited Destroy;
-end;
-
-procedure Tx.DrawSelectionMarker(X, Y: Integer);
-var
-  MarkerSize: Integer;
-  LeftTopX, LeftTopY: Integer;
-begin
-  // Copy the original image to Image1 to clear previous markers
-  Image1.Picture.Bitmap.Assign(FOriginalImage);
-
-  // Define the size of the marker (e.g., 10x10 pixels)
-  MarkerSize := 10;
-
-  // Calculate the top-left corner of the marker
-  LeftTopX := X - (MarkerSize div 2);
-  LeftTopY := Y - (MarkerSize div 2);
-
-  // Draw the marker (e.g., a red rectangle)
-  with Image1.Canvas do
-  begin
-    Pen.Color := clRed;
-    Pen.Width := 2;
-    Brush.Style := bsClear;
-    Rectangle(LeftTopX, LeftTopY, LeftTopX + MarkerSize, LeftTopY + MarkerSize);
-  end;
-end;
-
-
-function Tx.MercatorYToLatitude(NormalizedY: Double): Double;
-var
-  MercatorY: Double;
-begin
-  // Adjust NormalizedY to Mercator Y
-  // MercatorY ranges from pi at the bottom to -pi at the top
-  MercatorY := Pi * (1 - 2 * NormalizedY);
-
-  // Convert Mercator Y to latitude in radians
-  Result := RadToDeg(ArcTan(Sinh(MercatorY)));
-end;
 
 
 
