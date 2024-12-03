@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls,
-  EditBtn, ComCtrls, DateTimePicker, ExtendedNotebook, DateUtils, Math, fpjson, jsonparser, Types;
+  EditBtn, ComCtrls, DateTimePicker, ExtendedNotebook, DateUtils, Math,
+  fpjson, jsonparser, Types;
 
 type
   TSunEvent = (
@@ -21,7 +22,7 @@ type
     seSolarNoon
   );
 
-  const
+const
   SunEventNames: array[TSunEvent] of string = (
     'Sunrise',
     'Sunset',
@@ -39,16 +40,23 @@ type
   clMaroon = TColor($800000);
   clNavy = TColor($000080);
 
-  type
-      TCoordinate = record
+type
+  TCoordinate = record
     Latitude: Double;
     Longitude: Double;
   end;
 
   TPolygon = array of TCoordinate;
-  TWorldMap = array of TPolygon;
+
+  TCountry = record
+    Name: String;
+    Polygons: array of TPolygon;
+  end;
+
+  TWorldMap = array of TCountry;
+
+type
   { Tx }
-  type
   Tx = class(TForm)
     Button1: TButton;
     Button2: TButton;
@@ -78,7 +86,6 @@ type
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-
     procedure OdbrojavanjeTimerTimer(Sender: TObject);
     procedure PaintBox1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -101,25 +108,20 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure DatePickerChange(Sender: TObject);
     function CalculateDayLength(Date: TDateTime): TDateTime;
-    procedure ProcessGeometry(GeometryObject: TJSONObject; MapIndex: Integer);
-    procedure ProcessPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
-    procedure ProcessMultiPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
-
-
-
-
+    procedure ProcessGeometry(GeometryObject: TJSONObject; CountryIndex: Integer);
+    procedure ProcessPolygon(CoordinatesData: TJSONData; CountryIndex: Integer);
+    procedure ProcessMultiPolygon(CoordinatesData: TJSONData; CountryIndex: Integer);
     procedure LoadWorldMapData;
     function MercatorProjectionY(Latitude: Double): Double;
     function MercatorYToLatitude(Y: Double): Double;
-
-
+    function GetCountryColor(CountryName: String; Latitude: Double): TColor;
+    function HashName(AName: String): LongWord;
   private
     LineX: Integer;          // X-coordinate of the vertical line
     IsDragging: Boolean;     // Indicates if the line is being dragged
     DragOffset: Integer;     // Offset between mouse position and line during drag
-        FLatitude: Double;
+    FLatitude: Double;
     FLongitude: Double;
-
     WorldMap: TWorldMap;
     FScale: Double;
     FOffsetX: Double;
@@ -127,12 +129,9 @@ type
     FMouseDown: Boolean;
     FMouseDownPos: TPoint;
     FMouseDownOffset: TPoint;
-
   public
     procedure UpdateDateFromLineX;
     procedure UpdateLineXFromDate;
-
-
   end;
 
 var
@@ -148,8 +147,7 @@ implementation
 
 { Tx }
 
-
-function tx.GetSunTime(Date: TDateTime; SunEvent: TSunEvent): TDateTime;
+function Tx.GetSunTime(Date: TDateTime; SunEvent: TSunEvent): TDateTime;
 var
   Year, Month, Day: Word;
   Longitude, Latitude: Double;
@@ -164,7 +162,7 @@ var
   SunTime: TDateTime;
   Zenith: Double;      // Zenith angle for the event
 
- function IsDaylightTime(D: TDateTime): Boolean;
+  function IsDaylightTime(D: TDateTime): Boolean;
   var
     Y, M, Dd: Word;
     StartDST, EndDST: TDateTime;
@@ -184,13 +182,8 @@ var
     Result := (D >= StartDST) and (D < EndDST);
   end;
 
-
 begin
-  // Zagreb coordinates
-  //Latitude := 45.8150;    // degrees North
-  //Longitude := 15.9819;   // degrees East
-    // Use selected coordinates
-
+  // Use selected coordinates
   Latitude := FLatitude;    // degrees North
   Longitude := FLongitude;  // degrees East
 
@@ -275,7 +268,8 @@ begin
   else
   begin
     // Calculate the Sun's local hour angle
-    cosH := (Cos(DegToRad(Zenith)) - (sinDec * Sin(DegToRad(Latitude)))) / (cosDec * Cos(DegToRad(Latitude)));
+    cosH := (Cos(DegToRad(Zenith)) - (sinDec * Sin(DegToRad(Latitude)))) /
+            (cosDec * Cos(DegToRad(Latitude)));
 
     // Check if the sun never rises or sets on this date
     if (cosH > 1) then
@@ -334,11 +328,8 @@ end;
 
 procedure Tx.ExtendedNotebook1Change(Sender: TObject);
 begin
-
+  // Implementation if needed
 end;
-
-
-
 
 procedure Tx.OdbrojavanjeTimerTimer(Sender: TObject);
 var
@@ -356,33 +347,26 @@ begin
 
   TrenutnoVrijemeLabel.Caption := FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', CurrentDateTime);
 
-
   if LapMiliseconds = IntervalMiliseconds then
   begin
     LogItem := LogListView.Items.Insert(0);
     LogItem.Caption := TrenutnoVrijemeLabel.Caption;
-
-    //L®ogListBox.Items.Add(FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', CurrentDateTime));
     LapMiliseconds := 0;
   end;
   LapMiliseconds := LapMiliseconds + 1;
 
-
-
   // Combine DatePicker and TimePicker into a single CiljaniDateTime value
   CiljaniDateTime := Int(DatePicker.Date) + Frac(TimePicker.Time);
-
-
 
   // Check if the target time is in the future
   if CurrentDateTime < CiljaniDateTime then
   begin
     if ProgressBar1.Max <> Round((CiljaniDateTime - StartTime) * 86400) then
     begin
-        ProgressBar1.Max := Round((CiljaniDateTime - StartTime) * 86400);
+      ProgressBar1.Max := Round((CiljaniDateTime - StartTime) * 86400);
     end;
-    ProgressBar1.Position := Round((now - StartTime) * TimeMultiplier);
-    StatusBar1.SimpleText:= ProgressBar1.Max.ToString;
+    ProgressBar1.Position := Round((Now - StartTime) * TimeMultiplier);
+    StatusBar1.SimpleText := ProgressBar1.Max.ToString;
 
     // Calculate the difference in time
     Years := YearsBetween(CurrentDateTime, CiljaniDateTime);
@@ -403,10 +387,10 @@ begin
     if Months > 0 then
       CountdownStr := CountdownStr + Format('%dM', [Months]);
     if Days > 0 then
-      CountdownStr := CountdownStr + Format('%d dana ', [Days]);
+      CountdownStr := CountdownStr + Format('%d days ', [Days]);
 
- // Add time component (hours, minutes, seconds, and milliseconds) with leading zeros
-CountdownStr := CountdownStr + Format(' %.2d:%.2d:%.2d.%.3d', [Hours, Minutes, Seconds, MilliSeconds]);
+    // Add time component (hours, minutes, seconds, and milliseconds) with leading zeros
+    CountdownStr := CountdownStr + Format(' %.2d:%.2d:%.2d.%.3d', [Hours, Minutes, Seconds, MilliSeconds]);
     // Update label caption with the formatted countdown
     OdbrojavanjeLabel.Caption := CountdownStr;
   end
@@ -426,6 +410,7 @@ var
   FeatureObject, GeometryObject: TJSONObject;
   CoordinatesData: TJSONData;
   i: Integer;
+  CountryName: String;
 begin
   // Load the GeoJSON file
   FileStream := TFileStream.Create(ExtractFilePath(Application.ExeName) + './world.geo.json', fmOpenRead);
@@ -451,6 +436,13 @@ begin
           if GeometryObject = nil then
             Continue;
 
+          // Extract country name from properties
+          CountryName := FeatureObject.FindPath('properties.name').AsString;
+
+          // Initialize the country record
+          WorldMap[i].Name := CountryName;
+          SetLength(WorldMap[i].Polygons, 0);
+
           // Process the geometry based on its type
           ProcessGeometry(GeometryObject, i);
         end;
@@ -466,7 +458,7 @@ begin
   end;
 end;
 
-   procedure Tx.ProcessGeometry(GeometryObject: TJSONObject; MapIndex: Integer);
+procedure Tx.ProcessGeometry(GeometryObject: TJSONObject; CountryIndex: Integer);
 var
   GeometryType: String;
   CoordinatesData: TJSONData;
@@ -475,12 +467,12 @@ begin
   CoordinatesData := GeometryObject.FindPath('coordinates');
 
   if GeometryType = 'Polygon' then
-    ProcessPolygon(CoordinatesData, MapIndex)
+    ProcessPolygon(CoordinatesData, CountryIndex)
   else if GeometryType = 'MultiPolygon' then
-    ProcessMultiPolygon(CoordinatesData, MapIndex);
+    ProcessMultiPolygon(CoordinatesData, CountryIndex);
 end;
 
-procedure Tx.ProcessPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
+procedure Tx.ProcessPolygon(CoordinatesData: TJSONData; CountryIndex: Integer);
 var
   CoordinatesArray: TJSONArray;
   RingArray: TJSONArray;
@@ -493,23 +485,27 @@ begin
   if CoordinatesArray.Count = 0 then
     Exit;
 
-  // We'll process only the outer ring (first ring)
-  RingArray := CoordinatesArray.Items[0] as TJSONArray;
-
-  SetLength(Polygon, RingArray.Count);
-
-  for i := 0 to RingArray.Count - 1 do
+  // Process each ring (polygon)
+  for i := 0 to CoordinatesArray.Count - 1 do
   begin
-    CoordPair := RingArray.Items[i] as TJSONArray;
-    Polygon[i].Longitude := CoordPair.Floats[0];
-    Polygon[i].Latitude := CoordPair.Floats[1];
-  end;
+    RingArray := CoordinatesArray.Items[i] as TJSONArray;
 
-  WorldMap[MapIndex] := Polygon;
+    SetLength(Polygon, RingArray.Count);
+
+    for j := 0 to RingArray.Count - 1 do
+    begin
+      CoordPair := RingArray.Items[j] as TJSONArray;
+      Polygon[j].Longitude := CoordPair.Floats[0];
+      Polygon[j].Latitude := CoordPair.Floats[1];
+    end;
+
+    // Add the polygon to the country's polygons
+    SetLength(WorldMap[CountryIndex].Polygons, Length(WorldMap[CountryIndex].Polygons) + 1);
+    WorldMap[CountryIndex].Polygons[High(WorldMap[CountryIndex].Polygons)] := Polygon;
+  end;
 end;
 
-
-procedure Tx.ProcessMultiPolygon(CoordinatesData: TJSONData; MapIndex: Integer);
+procedure Tx.ProcessMultiPolygon(CoordinatesData: TJSONData; CountryIndex: Integer);
 var
   PolygonsArray: TJSONArray;
   i: Integer;
@@ -518,24 +514,21 @@ begin
   PolygonsArray := CoordinatesData as TJSONArray;
   for i := 0 to PolygonsArray.Count - 1 do
   begin
-    // For simplicity, we process only the first polygon
-    ProcessPolygon(PolygonsArray.Items[i], MapIndex);
-    // If you want to process all polygons, you'll need to adjust WorldMap accordingly
-    Break; // Remove this line to process all polygons
+    ProcessPolygon(PolygonsArray.Items[i], CountryIndex);
   end;
 end;
 
-
-
 procedure Tx.PaintBox1Paint(Sender: TObject);
 var
-  i, j: Integer;
+  i, j, k: Integer;
   MapWidth, MapHeight: Double;
   OffsetX, OffsetY: Double;
   Scale: Double;
   ScreenX, ScreenY: Integer;
+  Country: TCountry;
   APolygon: TPolygon;
   ScreenPoints: array of TPoint;
+  CountryColor: TColor;
 begin
   // Define the map dimensions in projected units
   MapWidth := DegToRad(360); // Longitude ranges from -180 to +180 degrees
@@ -556,26 +549,37 @@ begin
     Pen.Color := clBlack;
     Pen.Width := 1;
 
-    // Loop through each polygon in the world map
+    // Loop through each country in the world map
     for i := 0 to High(WorldMap) do
     begin
-      APolygon := WorldMap[i];
-      if Length(APolygon) = 0 then
-        Continue;
+      Country := WorldMap[i];
 
-      // Set the length of the ScreenPoints array
-      SetLength(ScreenPoints, Length(APolygon));
-
-      // Convert each coordinate to screen points
-      for j := 0 to High(APolygon) do
+      // Loop through each polygon in the country
+      for j := 0 to High(Country.Polygons) do
       begin
-        ScreenX := Round(OffsetX + Scale * DegToRad(APolygon[j].Longitude));
-        ScreenY := Round(OffsetY - Scale * MercatorProjectionY(APolygon[j].Latitude));
-        ScreenPoints[j] := Point(ScreenX, ScreenY);
-      end;
+        APolygon := Country.Polygons[j];
+        if Length(APolygon) = 0 then
+          Continue;
 
-      // Draw the polygon
-      Polygon(ScreenPoints);
+        // Set the length of the ScreenPoints array
+        SetLength(ScreenPoints, Length(APolygon));
+
+        // Convert each coordinate to screen points
+        for k := 0 to High(APolygon) do
+        begin
+          ScreenX := Round(OffsetX + Scale * DegToRad(APolygon[k].Longitude));
+          ScreenY := Round(OffsetY - Scale * MercatorProjectionY(APolygon[k].Latitude));
+          ScreenPoints[k] := Point(ScreenX, ScreenY);
+        end;
+
+        // Set brush color for the country with gradient effect
+        CountryColor := GetCountryColor(Country.Name, APolygon[0].Latitude);
+        Brush.Color := CountryColor;
+        Brush.Style := bsSolid;
+
+        // Draw the filled polygon
+        Polygon(ScreenPoints);
+      end;
     end;
 
     // Draw the selection marker
@@ -592,9 +596,6 @@ begin
   end;
 end;
 
-
-
-
 procedure Tx.PaintBox1MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
@@ -609,6 +610,7 @@ begin
     FMouseDown := True;
     FMouseDownPos := Point(X, Y);
     FMouseDownOffset := Point(Round(FOffsetX), Round(FOffsetY));
+    Screen.Cursor := crSizeAll; // Change cursor to indicate panning
   end
   else if Button = mbRight then
   begin
@@ -644,7 +646,6 @@ begin
   end;
 end;
 
-
 procedure Tx.PaintBox1MouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
   if FMouseDown then
@@ -661,10 +662,9 @@ begin
   if Button = mbLeft then
   begin
     FMouseDown := False;
+    Screen.Cursor := crDefault; // Reset cursor
   end;
 end;
-
-
 
 procedure Tx.PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState; WheelDelta: Integer;
   MousePos: TPoint; var Handled: Boolean);
@@ -700,8 +700,7 @@ begin
   Handled := True;
 end;
 
-
-function tx.MercatorProjectionY(Latitude: Double): Double;
+function Tx.MercatorProjectionY(Latitude: Double): Double;
 var
   LatRad: Double;
 begin
@@ -715,11 +714,10 @@ begin
   Result := Ln(Tan(Pi / 4 + LatRad / 2));
 end;
 
-function tx.MercatorYToLatitude(Y: Double): Double;
+function Tx.MercatorYToLatitude(Y: Double): Double;
 begin
   Result := RadToDeg(2 * ArcTan(Exp(Y)) - Pi / 2);
 end;
-
 
 procedure Tx.SunEventsChange(Sender: TObject);
 var
@@ -899,7 +897,7 @@ begin
     Pen.Style := psSolid; // Reset pen style
   end;
 
-    DayLength := CalculateDayLength(DatePicker.Date);
+  DayLength := CalculateDayLength(DatePicker.Date);
 
   // Format the day length as a string (hours, minutes, seconds)
   DayLengthStr := FormatDateTime('h "hrs" n "mins" s "secs"', DayLength);
@@ -918,7 +916,6 @@ begin
   end;
 end;
 
-
 procedure Tx.SunGraphPaintBoxMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
@@ -931,7 +928,6 @@ begin
     end;
   end;
 end;
-
 
 procedure Tx.SunGraphPaintBoxMouseMove(Sender: TObject; Shift: TShiftState;
   X, Y: Integer);
@@ -949,17 +945,15 @@ begin
   end;
 end;
 
-
 procedure Tx.SunGraphPaintBoxMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
   IsDragging := False;
 end;
 
-
 procedure Tx.DatePickerChange(Sender: TObject);
 begin
-      // Update the TimePicker with the time of the selected sun event
+  // Update the TimePicker with the time of the selected sun event
   SunEventsChange(Sender);
   // Update LineX based on the new date
   UpdateLineXFromDate;
@@ -967,15 +961,14 @@ begin
   SunGraphPaintBox.Invalidate;
 end;
 
-
 procedure Tx.TabControl1Change(Sender: TObject);
 begin
-
+  // Implementation if needed
 end;
 
 procedure Tx.TimerIntervalTrackbarChange(Sender: TObject);
 begin
-  IntervalMiliseconds:=TimerIntervalTrackbar.Position;
+  IntervalMiliseconds := TimerIntervalTrackbar.Position;
   TimerIntervalLabel.Caption := IntToStr(IntervalMiliseconds div 1000);
 end;
 
@@ -983,7 +976,7 @@ procedure Tx.FormCreate(Sender: TObject);
 var
   Event: TSunEvent;
 begin
-    SunEvents.Items.Clear;
+  SunEvents.Items.Clear;
   for Event := Low(TSunEvent) to High(TSunEvent) do
     SunEvents.Items.Add(SunEventNames[Event]);
 
@@ -999,14 +992,17 @@ begin
   FOffsetX := 0.0;     // Initial horizontal offset
   FOffsetY := 0.0;     // Initial vertical offset
   FMouseDown := False; // Mouse is not pressed
+
+  // Set initial coordinates to Zagreb
+  FLatitude := 45.8150;    // Zagreb's latitude
+  FLongitude := 15.9819;   // Zagreb's longitude
+
   // Load the world map data from the GeoJSON file
   LoadWorldMapData;
+
+  // Redraw the map to show the selection marker
+  PaintBox1.Invalidate;
 end;
-
-
-
-
-
 
 procedure Tx.Button2Click(Sender: TObject);
 begin
@@ -1020,11 +1016,11 @@ end;
 
 procedure Tx.UpdateDateFromLineX;
 var
-  Year, Month, Day: Word;      // Declare variables for Year, Month, Day
+  Year, Month, Day: Word;
   TotalDays, DayIndex: Integer;
   StartDate: TDateTime;
 begin
-  DecodeDate(DatePicker.Date, Year, Month, Day);  // Use declared variables
+  DecodeDate(DatePicker.Date, Year, Month, Day);
   StartDate := EncodeDate(Year, 1, 1);
   TotalDays := DaysInYear(Year);
   // Calculate the day index based on LineX
@@ -1035,14 +1031,13 @@ begin
   DatePicker.Date := StartDate + DayIndex;
 end;
 
-
 procedure Tx.UpdateLineXFromDate;
 var
-  Year, Month, Day: Word;      // Declare variables for Year, Month, Day
+  Year, Month, Day: Word;
   TotalDays, DayIndex: Integer;
   StartDate: TDateTime;
 begin
-  DecodeDate(DatePicker.Date, Year, Month, Day);  // Use declared variables
+  DecodeDate(DatePicker.Date, Year, Month, Day);
   StartDate := EncodeDate(Year, 1, 1);
   TotalDays := DaysInYear(Year);
   DayIndex := Trunc(DatePicker.Date - StartDate);
@@ -1066,19 +1061,37 @@ begin
     Result := (SunsetTime + 1) - SunriseTime;
 end;
 
-
-
-
-
-function MercatorProjectionY(Latitude: Double): Double;
+function Tx.GetCountryColor(CountryName: String; Latitude: Double): TColor;
+var
+  BaseColor: TColor;
+  BrightnessFactor: Double;
+  R, G, B: Byte;
 begin
-  Result := Ln(Tan(Pi / 4 + DegToRad(Latitude) / 2));
+  // Generate a base color based on the country name
+  BaseColor := StringToColor('$' + Copy(IntToHex(HashName(CountryName), 6), 1, 6));
+
+  // Adjust brightness based on latitude to create a gradient effect
+  BrightnessFactor := 1.0 - (Abs(Latitude) / 90.0) * 0.5; // Ranges from 0.5 to 1.0
+
+  R := GetRValue(BaseColor);
+  G := GetGValue(BaseColor);
+  B := GetBValue(BaseColor);
+
+  R := Round(R * BrightnessFactor);
+  G := Round(G * BrightnessFactor);
+  B := Round(B * BrightnessFactor);
+
+  Result := RGB(R, G, B);
 end;
 
-
-
-
+function Tx.HashName(AName: String): LongWord;
+var
+  i: Integer;
+begin
+  Result := 0;
+  for i := 1 to Length(AName) do
+    Result := ((Result shl 5) or (Result shr 27)) xor Ord(AName[i]);
+end;
 
 end.
-
 

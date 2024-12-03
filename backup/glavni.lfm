@@ -7,6 +7,7 @@ object x: Tx
   ClientHeight = 994
   ClientWidth = 882
   Color = clSkyBlue
+  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   object GroupBox1: TGroupBox
     Left = 0
