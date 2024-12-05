@@ -7,7 +7,6 @@ object x: Tx
   ClientHeight = 994
   ClientWidth = 882
   Color = clSkyBlue
-  LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   object GroupBox1: TGroupBox
     Left = 0
@@ -89,11 +88,11 @@ object x: Tx
   end
   object GroupBox2: TGroupBox
     Left = -8
-    Height = 1504
-    Top = 112
+    Height = 1488
+    Top = 128
     Width = 984
     Caption = 'Log'
-    ClientHeight = 1477
+    ClientHeight = 1461
     ClientWidth = 974
     ParentBackground = False
     TabOrder = 1
@@ -109,10 +108,10 @@ object x: Tx
     end
   end
   object StatusBar1: TStatusBar
-    Left = 7
+    Left = 248
     Height = 18
-    Top = 167
-    Width = 731
+    Top = 168
+    Width = 443
     Align = alNone
     Anchors = []
     Panels = <>
@@ -141,23 +140,25 @@ object x: Tx
     TabOrder = 4
   end
   object ExtendedNotebook1: TExtendedNotebook
-    Left = 7
-    Height = 720
-    Top = 240
-    Width = 856
+    Left = -6
+    Height = 721
+    Top = 239
+    Width = 901
     ActivePage = TabSheet1
+    Anchors = [akLeft, akRight]
     TabIndex = 0
     TabOrder = 5
     OnChange = ExtendedNotebook1Change
     object TabSheet1: TTabSheet
       Caption = 'Sun Times'
-      ClientHeight = 684
-      ClientWidth = 850
+      ClientHeight = 685
+      ClientWidth = 895
       object SunGraphPaintBox: TPaintBox
         Left = 8
         Height = 312
         Top = 0
         Width = 840
+        Anchors = [akTop, akLeft, akRight, akBottom]
         OnMouseDown = SunGraphPaintBoxMouseDown
         OnMouseMove = SunGraphPaintBoxMouseMove
         OnPaint = SunGraphPaintBoxPaint
@@ -167,6 +168,7 @@ object x: Tx
         Height = 360
         Top = 320
         Width = 840
+        Anchors = [akTop, akLeft, akRight, akBottom]
         OnMouseDown = PaintBox1MouseDown
         OnMouseMove = PaintBox1MouseMove
         OnMouseUp = PaintBox1MouseUp
@@ -179,8 +181,8 @@ object x: Tx
     end
     object TabSheet3: TTabSheet
       Caption = 'Log'
-      ClientHeight = 684
-      ClientWidth = 850
+      ClientHeight = 685
+      ClientWidth = 895
       object LogListView: TListView
         Left = 0
         Height = 447

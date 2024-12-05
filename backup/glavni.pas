@@ -1073,16 +1073,17 @@ begin
   // Adjust brightness based on latitude to create a gradient effect
   BrightnessFactor := 1.0 - (Abs(Latitude) / 90.0) * 0.5; // Ranges from 0.5 to 1.0
 
-  R := GetRValue(BaseColor);
-  G := GetGValue(BaseColor);
-  B := GetBValue(BaseColor);
+  R := Red(BaseColor);
+  G := Green(BaseColor);
+  B := Blue(BaseColor);
 
   R := Round(R * BrightnessFactor);
   G := Round(G * BrightnessFactor);
   B := Round(B * BrightnessFactor);
 
-  Result := RGB(R, G, B);
+  Result := RGBToColor(R, G, B);
 end;
+
 
 function Tx.HashName(AName: String): LongWord;
 var
