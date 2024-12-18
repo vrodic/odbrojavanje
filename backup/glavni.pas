@@ -61,10 +61,11 @@ type
     Button1: TButton;
     Button2: TButton;
     ExtendedNotebook1: TExtendedNotebook;
+    CiljaniDateTimeLabel: TLabel;
     LogListView: TListView;
     PaintBox1: TPaintBox;
-    SunGraphPaintBox: TPaintBox;
     SunEvents: TComboBox;
+    SunGraphPaintBox: TPaintBox;
     DatePicker: TDateEdit;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
@@ -73,10 +74,10 @@ type
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
     TabSheet3: TTabSheet;
-    TimerIntervalLabel: TLabel;
     LogListBox: TListBox;
     StatusBar1: TStatusBar;
     TimePicker: TTimeEdit;
+    TimerIntervalLabel: TLabel;
     TimerIntervalTrackbar: TTrackBar;
     TrenutnoVrijemeLabel: TLabel;
     OdbrojavanjeLabel: TLabel;
@@ -331,6 +332,23 @@ begin
   // Implementation if needed
 end;
 
+function DateTimeToStrUs(dt: TDatetime): string;
+var
+    us: string;
+begin
+    //Spit out most of the result: '20160802 11:34:36.'
+    Result := FormatDateTime('yyyymmdd hh":"nn":"ss"."', dt);
+
+    //extract the number of microseconds
+    dt := Frac(dt); //fractional part of day
+    dt := dt * 24*60*60; //number of seconds in that day
+    us := IntToStr(Round(Frac(dt)*1000000));
+
+    //Add the us integer to the end:
+    // '20160801 11:34:36.' + '00' + '123456'
+    Result := Result + StringOfChar('0', 6-Length(us)) + us;
+end;
+
 procedure Tx.OdbrojavanjeTimerTimer(Sender: TObject);
 var
   CurrentDateTime, CiljaniDateTime, RemainingTime: TDateTime;
@@ -393,6 +411,7 @@ begin
     CountdownStr := CountdownStr + Format(' %.2d:%.2d:%.2d.%.3d', [Hours, Minutes, Seconds, MilliSeconds]);
     // Update label caption with the formatted countdown
     OdbrojavanjeLabel.Caption := CountdownStr;
+    CiljaniDateTimeLabel.Caption := DateTimeToStrUs(CiljaniDateTime);
   end
   else
   begin
